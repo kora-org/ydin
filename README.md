@@ -6,17 +6,14 @@ My hobby OS development, made with stivale2 and limine
 
 ## How to compile
 * Install LLVM and Clang
-
-** Ubuntu/Debian
+	* Ubuntu/Debian
 ```
 apt install make binutils llvm clang
 ```
-
-** Arch Linux
+	* Arch Linux
 ```
 pacman -S make binutils llvm clang
 ```
-
 * Compile using make
 ```
 make
