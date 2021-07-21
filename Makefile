@@ -14,14 +14,19 @@ limine:
 kernel:
 	$(MAKE) -C src/kernel
 
-#libc:
-#	$(MAKE) -C src/libc
+libc:
+	$(MAKE) -C src/libc
 
-$(ISO_IMAGE): limine kernel 
+$(ISO_IMAGE): limine kernel libc
 	rm -rf iso_root
 	mkdir -p iso_root
+	mkdir -p iso_root/usr
+	mkdir -p iso_root/usr/include
+	mkdir -p iso_root/usr/lib
 	cp build/kernel/kernel.elf \
 		limine.cfg limine/limine.sys limine/limine-cd.bin limine/limine-eltorito-efi.bin iso_root/
+	cp src/include iso_root/usr -rf 
+	cp build/libc/*.a iso_root/usr/lib
 	xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot limine-eltorito-efi.bin \
