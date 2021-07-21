@@ -19,7 +19,7 @@ LDFLAGS =
  
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS  :=         \
-	-I.                    \
+	-I../include           \
 	-std=gnu11             \
 	-ffreestanding         \
 	-fno-stack-protector   \
