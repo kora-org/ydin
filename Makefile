@@ -11,13 +11,16 @@ limine:
 	git clone https://github.com/limine-bootloader/limine.git --branch=v2.0-branch-binary --depth=1
 	make -C limine
 
-src/kernel.elf:
-	$(MAKE) -C src
+kernel:
+	$(MAKE) -C src/kernel
 
-$(ISO_IMAGE): limine src/kernel.elf
+#libc:
+#	$(MAKE) -C src/libc
+
+$(ISO_IMAGE): limine kernel 
 	rm -rf iso_root
 	mkdir -p iso_root
-	cp build/kernel.elf \
+	cp build/kernel/kernel.elf \
 		limine.cfg limine/limine.sys limine/limine-cd.bin limine/limine-eltorito-efi.bin iso_root/
 	xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
