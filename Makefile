@@ -17,7 +17,7 @@ kernel:
 libc:
 	$(MAKE) -C src/libc
 
-$(ISO_IMAGE): limine kernel libc
+$(ISO_IMAGE): limine libc kernel 
 	rm -rf iso_root
 	mkdir -p iso_root
 	mkdir -p iso_root/boot

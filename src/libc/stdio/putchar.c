@@ -1,15 +1,15 @@
 #include <stdio.h>
  
-//#if defined(__is_libk)
+#if defined(__is_libk)
 #include <kernel/kernel.h>
-//#endif
+#endif
  
 int putchar(int ic) {
-//#if defined(__is_libk)
+#if defined(__is_libk)
 	char c = (char) ic;
 	term_write(&c, sizeof(c));
-//#else
+#else
 	// TODO: Implement stdio and the write system call.
-//#endif
+#endif
 	return ic;
 }

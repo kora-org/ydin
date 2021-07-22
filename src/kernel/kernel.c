@@ -120,8 +120,8 @@ void _start(struct stivale2_struct *stivale2_struct) {
     
     // We should now be able to call the above function pointer to print out
     // a simple "Hello World" to screen.
-    term_write("Hello World", 11);
-    //printf("Hello World");
+    //term_write("Hello World", 11);
+    printf("Hello World");
  
     // We're done, just hang...
     for (;;) {

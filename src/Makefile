@@ -5,11 +5,11 @@ all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ] || [ ! -
 
 .PHONY: libc kernel
 
+libc:
+	$(MAKE) -C libc
+
 kernel: libc
 	$(MAKE) -C kernel
-
-libc: 
-	$(MAKE) -C libc
 
 clean:
 	rm -rf ../build
