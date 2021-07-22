@@ -21,8 +21,8 @@ make
 
 ## Progress
 - [x] Displaying a basic "Hello World" on the screen<br>
-<input type="checkbox" disabled checked indeterminate> Implementing libc<br>
-<input type="checkbox" disabled checked indeterminate> Give the OS a name
+<input type="checkbox" disabled checked indeterminate /> Implementing libc<br>
+<input type="checkbox" disabled checked indeterminate /> Give the OS a name
 - [ ] Making a basic shell
 - [ ] Making the OS POSIX compliant
 - [ ] Implementing an ELF binary loader
