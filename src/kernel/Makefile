@@ -29,7 +29,8 @@ INTERNALCFLAGS  :=         \
 	-mno-3dnow             \
 	-mno-sse               \
 	-mno-sse2              \
-	-mno-red-zone
+	-mno-red-zone          \
+	-z muldefs
  
 # Internal linker flags that should not be changed by the user.
 INTERNALLDFLAGS :=         \
@@ -42,8 +43,10 @@ INTERNALLDFLAGS :=         \
 	-ztext
  
 # Use find to glob all *.c files in the directory and extract the object names.
-CFILES := $(shell find ./ -type f -name '*.c')
-OBJ    := $(CFILES:.c=.o)
+CFILES      := $(shell find ./ -type f -name '*.c')
+LIBC_CFILES := $(shell find ../libc/ -type f -name '*.c')
+OBJ         := $(addprefix ../../build/kernel/,$(notdir $(CFILES:.c=.o)))
+LIBC_OBJ    := $(addprefix ../../build/libc/,$(LIBC_CFILES:.c=.o))
  
 # Targets that do not actually build a file of the same name.
 .PHONY: all clean
@@ -56,11 +59,11 @@ all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ]; \
  
 # Link rules for the final kernel executable.
 $(KERNEL): $(OBJ)
-	$(CC) ../../build/kernel/$(OBJ) $(CFLAGS) -target x86_64-linux-elf -nostdlib -Wl,linker.ld $(INTERNALCFLAGS) -o ../../build/kernel/$@ -fuse-ld=lld
+	$(CC) $(OBJ) $(LIBC_OBJ) $(CFLAGS) -target x86_64-linux-elf -nostdlib -Wl,linker.ld $(INTERNALCFLAGS) -o ../../build/kernel/$@ -fuse-ld=lld
  
 # Compilation rules for *.c files.
-%.o: %.c
-	$(CC) $(CFLAGS) -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o ../../build/kernel/$@
+../../build/kernel/%.o: %.c
+	$(CC) $(CFLAGS) -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o $@
  
 # Remove object files and the final executable.
 clean:

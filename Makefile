@@ -20,11 +20,13 @@ libc:
 $(ISO_IMAGE): limine kernel libc
 	rm -rf iso_root
 	mkdir -p iso_root
+	mkdir -p iso_root/boot
 	mkdir -p iso_root/usr
 	mkdir -p iso_root/usr/include
 	mkdir -p iso_root/usr/lib
 	cp build/kernel/kernel.elf \
-		limine.cfg limine/limine.sys limine/limine-cd.bin limine/limine-eltorito-efi.bin iso_root/
+		limine/limine.sys iso_root/boot/
+	cp limine.cfg limine/limine-cd.bin limine/limine-eltorito-efi.bin iso_root/
 	cp src/include iso_root/usr -rf 
 	cp build/libc/*.a iso_root/usr/lib
 	xorriso -as mkisofs -b limine-cd.bin \

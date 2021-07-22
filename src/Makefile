@@ -1,14 +1,14 @@
 all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ] || [ ! -d "../../build/libc" ]; \
 	 then mkdir -p ../../build/kernel ../../build/libc; \
 	 fi;) \
-	 kernel
+	 libc kernel
 
-.PHONY: kernel
-kernel: 
+.PHONY: libc kernel
+
+kernel: libc
 	$(MAKE) -C kernel
 
-.PHONY: libc
-libc: kernel
+libc: 
 	$(MAKE) -C libc
 
 clean:

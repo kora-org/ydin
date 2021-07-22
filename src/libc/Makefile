@@ -46,10 +46,10 @@ all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/libc" ] || [ ! -d 
 	libc.a libk.a
 
 libc.a: $(OBJ)
-	cd ../../build/libc; $(AR) rcs ../../build/libc/$@ $(OBJ)
+	cd ../../build/libc; $(AR) rcs $@ $(OBJ)
 
 libk.a: $(LIBK_OBJ)
-	cd ../../build/libc; $(AR) rcs ../../build/libc/$@ $(LIBK_OBJ)
+	cd ../../build/libc; $(AR) rcs $@ $(LIBK_OBJ)
 
 # Compilation rules for *.c files.
 %.o: %.c
