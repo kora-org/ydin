@@ -3,14 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
- 
-static bool print(const char* data, size_t length) {
-	const unsigned char* bytes = (const unsigned char*) data;
-	for (size_t i = 0; i < length; i++)
-		if (putchar(bytes[i]) == EOF)
-			return false;
-	return true;
-}
+#include <kernel/kernel.h>
  
 int printf(const char* restrict format, ...) {
 	va_list parameters;
@@ -31,8 +24,7 @@ int printf(const char* restrict format, ...) {
 				// TODO: Set errno to EOVERFLOW.
 				return -1;
 			}
-			if (!print(format, amount))
-				return -1;
+			term_write(format, amount);
 			format += amount;
 			written += amount;
 			continue;
@@ -47,8 +39,7 @@ int printf(const char* restrict format, ...) {
 				// TODO: Set errno to EOVERFLOW.
 				return -1;
 			}
-			if (!print(&c, sizeof(c)))
-				return -1;
+			term_write(&c, sizeof(c));
 			written++;
 		} else if (*format == 's') {
 			format++;
@@ -58,8 +49,7 @@ int printf(const char* restrict format, ...) {
 				// TODO: Set errno to EOVERFLOW.
 				return -1;
 			}
-			if (!print(str, len))
-				return -1;
+			term_write(str, len);
 			written += len;
 		} else {
 			format = format_begun_at;
@@ -68,8 +58,7 @@ int printf(const char* restrict format, ...) {
 				// TODO: Set errno to EOVERFLOW.
 				return -1;
 			}
-			if (!print(format, len))
-				return -1;
+			term_write(format, len);
 			written += len;
 			format += len;
 		}

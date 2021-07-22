@@ -95,7 +95,9 @@ void *stivale2_get_tag(struct stivale2_struct *stivale2_struct, uint64_t id) {
         current_tag = (void *)current_tag->next;
     }
 }
- 
+
+void (*term_write)(const char *string, size_t length);
+
 // The following will be our kernel's entry point.
 void _start(struct stivale2_struct *stivale2_struct) { 	
     // Let's get the terminal structure tag from the bootloader.
@@ -116,11 +118,10 @@ void _start(struct stivale2_struct *stivale2_struct) {
     // Now, let's assign this pointer to a function pointer which
     // matches the prototype described in the stivale2 specification for
     // the stivale2_term_write function.
-    void (*term_write)(const char *string, size_t length) = term_write_ptr;
+    term_write = term_write_ptr;
     
     // We should now be able to call the above function pointer to print out
     // a simple "Hello World" to screen.
-    //term_write("Hello World", 11);
     printf("Hello World");
  
     // We're done, just hang...
