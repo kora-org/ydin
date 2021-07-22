@@ -21,9 +21,9 @@ make
 
 ## Progress
 - [x] Displaying a basic "Hello World" on the screen
-- [-] Implementing libc
-- [-] Give the OS a name 
-- [] Making a basic shell
-- [] Making the OS POSIX compliant
-- [] Implementing an ELF binary loader
-- [] Implementing a GUI
+<input type="checkbox" indeterminate> Implementing libc<br>
+<input type="checkbox" indeterminate> Give the OS a name 
+- [ ] Making a basic shell
+- [ ] Making the OS POSIX compliant
+- [ ] Implementing an ELF binary loader
+- [ ] Implementing a GUI
