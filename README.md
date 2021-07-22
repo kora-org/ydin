@@ -20,10 +20,10 @@ make
 ```
 
 ## Progress
-[X] Displaying a basic "Hello World" on the screen
-[-] Implementing libc
-[-] Give the OS a name 
-[] Making a basic shell
-[] Making the OS POSIX compliant
-[] Implementing an ELF binary loader
-[] Implementing a GUI
+- [x] Displaying a basic "Hello World" on the screen
+- [-] Implementing libc
+- [-] Give the OS a name 
+- [] Making a basic shell
+- [] Making the OS POSIX compliant
+- [] Implementing an ELF binary loader
+- [] Implementing a GUI
