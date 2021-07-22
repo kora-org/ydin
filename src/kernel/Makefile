@@ -46,7 +46,7 @@ INTERNALLDFLAGS :=         \
 CFILES      := $(shell find ./ -type f -name '*.c')
 LIBC_CFILES := $(shell find ../libc/ -type f -name '*.c')
 OBJ         := $(addprefix ../../build/kernel/,$(notdir $(CFILES:.c=.o)))
-LIBC_OBJ    := $(addprefix ../../build/libc/,$(LIBC_CFILES:.c=.o))
+LIBC_OBJ    := $(addprefix ../../build/libc/,$(LIBC_CFILES:.c=.libk.o))
  
 # Targets that do not actually build a file of the same name.
 .PHONY: all clean
