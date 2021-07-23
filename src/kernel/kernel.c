@@ -9,7 +9,7 @@
 // We need to tell the stivale bootloader where we want our stack to be.
 // We are going to allocate our stack as an uninitialised array in .bss.
 static uint8_t stack[4096];
-//extern void kmain();
+extern void kmain();
  
 // stivale2 uses a linked list of tags for both communicating TO the
 // bootloader, or receiving info FROM it. More information about these tags
@@ -133,11 +133,23 @@ void _start(struct stivale2_struct *stivale2_struct) {
     //    asm ("hlt");
     //}
 
-//    kmain();
-//}
+    kmain();
+}
 
-//void kmain() {
-	printf("kernel: Initializing IDT...\n");
+void kmain() {
+	printf("\033[44m   __                  \033[0m          \n\033[44m");
+	printf("  / _| __ _ _ __ _   _ \033[0m ___  ___ \n\033[44m");
+	printf(" | |_ / _` | '__| | | |\033[0m/ _ \\/ __|\n\033[44m");
+	printf(" |  _| (_| | |  | |_| |\033[0m (_) \\__ \\\n\033[44m");
+	printf(" |_|  \\__,_|_|   \\__,_|\033[0m\\___/|___/\n\033[44m");
+	printf("                       \033[0m                    \n");
+	printf("version dev\n\n");
+	printf("kernel: Initializing IDT...");
 	isr_install();
-	printf("Hello World!");
+	printf("                                                                              [ \033[32mOK \033[0m]\n");
+	printf("\n");
+	printf("Hello world! Shell is coming soon!");
+	for (;;) {
+		asm ("hlt");
+	}
 }

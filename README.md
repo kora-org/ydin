@@ -1,5 +1,5 @@
-# osdev
-My hobby OS development, made with stivale2 and limine
+# <center>![FaruOS](logo.png)</center>
+<center>A simple operating system, made with stivale2 and limine</center>
 
 ## Requirements
 * LLVM/Clang (because compiling x86-64-elf-gcc is a pain in the butt)
@@ -21,8 +21,8 @@ make
 
 ## Progress
 - [x] Displaying a basic "Hello World" on the screen
-- [x] (partial) Implement a libc
-- [ ] Give the OS a name
+- [x] Implement a libc
+- [x] Give the OS a name
 - [ ] Making a basic shell
 - [ ] Making the OS POSIX compliant
 - [ ] Implement an ELF binary loader
