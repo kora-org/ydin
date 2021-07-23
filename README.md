@@ -1,4 +1,4 @@
-# <p align="center"><img src="logo.png" width="200px" alt="FaruOS"/></p>
+# <p align="center">![FaruOS](logo_w_bg.png)</p>
 <p align="center">A simple operating system, made with stivale2 and limine</p>
 
 ## Requirements

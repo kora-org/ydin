@@ -9,7 +9,7 @@
 // We need to tell the stivale bootloader where we want our stack to be.
 // We are going to allocate our stack as an uninitialised array in .bss.
 static uint8_t stack[4096];
-extern void kmain();
+extern void kmain(struct stivale2_struct *stivale2_struct);
  
 // stivale2 uses a linked list of tags for both communicating TO the
 // bootloader, or receiving info FROM it. More information about these tags
@@ -32,6 +32,14 @@ static struct stivale2_header_tag_terminal terminal_hdr_tag = {
     // as it is unused.
     .flags = 0
 };
+
+struct stivale2_header_tag_smp smp_hdr_tag = {
+    .tag = {
+        .identifier = STIVALE2_HEADER_TAG_SMP_ID,
+        .next       = (uint64_t)&terminal_hdr_tag
+    },
+    .flags = 0
+};
  
 // We are now going to define a framebuffer header tag, which is mandatory when
 // using the stivale2 terminal.
@@ -43,8 +51,8 @@ static struct stivale2_header_tag_framebuffer framebuffer_hdr_tag = {
     .tag = {
         .identifier = STIVALE2_HEADER_TAG_FRAMEBUFFER_ID,
         // Instead of 0, we now point to the previous header tag. The order in
-        // which header tags are linked does not matter.
-        .next = (uint64_t)&terminal_hdr_tag
+        // which header tags are linked does not matter.0
+        .next = (uint64_t)&smp_hdr_tag
     },
     // We set all the framebuffer specifics to 0 as we want the bootloader
     // to pick the best it can.
@@ -133,21 +141,22 @@ void _start(struct stivale2_struct *stivale2_struct) {
     //    asm ("hlt");
     //}
 
-    kmain();
+    kmain(stivale2_struct);
 }
 
-void kmain() {
+void kmain(struct stivale2_struct *stivale2_struct) {
 	printf("\033[44m   __                  \033[0m          \n\033[44m");
 	printf("  / _| __ _ _ __ _   _ \033[0m ___  ___ \n\033[44m");
 	printf(" | |_ / _` | '__| | | |\033[0m/ _ \\/ __|\n\033[44m");
 	printf(" |  _| (_| | |  | |_| |\033[0m (_) \\__ \\\n\033[44m");
 	printf(" |_|  \\__,_|_|   \\__,_|\033[0m\\___/|___/\n\033[44m");
 	printf("                       \033[0m                    \n");
-	printf("version dev\n");
+	printf("version %s\n", FARUOS_VERSION);
 	printf("Copyright (C) 2021 Leap of Azzam\n\n");
-	printf("kernel: Initializing IDT...");
+	printf("info: Bootloader: %s %s\n", stivale2_struct->bootloader_brand, stivale2_struct->bootloader_version);
+	printf("kernel: Initializing interrupts...");
 	isr_install();
-	printf("                                                                              [ \033[32mOK \033[0m]\n");
+	printf(" [ \033[32mOK \033[0m]\n");
 	printf("\n");
 	printf("Hello world! Shell is coming soon!");
 	for (;;) {

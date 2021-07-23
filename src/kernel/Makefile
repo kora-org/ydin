@@ -1,6 +1,7 @@
 # This is the name that our final kernel executable will have.
 # Change as needed.
-KERNEL := kernel.elf
+KERNEL  := kernel.elf
+VERSION := dev
  
 # It is highly recommended to use a custom built cross toolchain to build a kernel.
 # We are only using "cc" as a placeholder here. It may work by using
@@ -12,24 +13,25 @@ CC = clang -fuse-ld=lld
 LD = ld.lld
  
 # User controllable CFLAGS.
-CFLAGS = -Wall -Wextra -O2 -pipe
+CFLAGS = -Wall -Wextra -O2 -pipe 
  
 # User controllable linker flags. We set none by default.
 LDFLAGS =
  
 # Internal C flags that should not be changed by the user.
-INTERNALCFLAGS  :=         \
-	-I../include           \
-	-std=gnu11             \
-	-ffreestanding         \
-	-fno-stack-protector   \
-	-fno-pic -fpie         \
-	-mno-80387             \
-	-mno-mmx               \
-	-mno-3dnow             \
-	-mno-sse               \
-	-mno-sse2              \
-	-mno-red-zone          \
+INTERNALCFLAGS  :=                  \
+	-DFARUOS_VERSION='"$(VERSION)"' \
+	-I../include                    \
+	-std=gnu11                      \
+	-ffreestanding                  \
+	-fno-stack-protector            \
+	-fno-pic -fpie                  \
+	-mno-80387                      \
+	-mno-mmx                        \
+	-mno-3dnow                      \
+	-mno-sse                        \
+	-mno-sse2                       \
+	-mno-red-zone                   \
 	-z muldefs
  
 # Internal linker flags that should not be changed by the user.

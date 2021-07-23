@@ -27,6 +27,7 @@ $(ISO_IMAGE): limine libc kernel
 	cp build/kernel/kernel.elf \
 		limine/limine.sys iso_root/boot/
 	cp limine.cfg limine/limine-cd.bin limine/limine-eltorito-efi.bin iso_root/
+	cp boot/* iso_root/boot/
 	cp src/include iso_root/usr -rf 
 	cp build/libc/*.a iso_root/usr/lib
 	xorriso -as mkisofs -b limine-cd.bin \
