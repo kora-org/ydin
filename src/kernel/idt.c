@@ -15,8 +15,12 @@ void idt_init() {
     );
 }
 
+void enable_idt() {
+	asm("sti");
+}
+
 void disable_idt() {
-	asm("cli; hlt");
+	asm("cli");
 }
 
 void idt_register_handler(uint8_t interrupt, unsigned long address) {
