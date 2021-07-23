@@ -5,7 +5,6 @@
 #include <kernel/kernel.h>
 #include <kernel/idt.h>
 #include <kernel/isr.h>
-#include <kernel/gdt.h>
  
 // We need to tell the stivale bootloader where we want our stack to be.
 // We are going to allocate our stack as an uninitialised array in .bss.
@@ -140,7 +139,5 @@ void _start(struct stivale2_struct *stivale2_struct) {
 //void kmain() {
 	printf("kernel: Initializing IDT...\n");
 	isr_install();
-	printf("kernel: Initializing GDT...\n");
-	load_gdt();
 	printf("Hello World!");
 }
