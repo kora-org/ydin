@@ -1,11 +1,16 @@
+#include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stivale/stivale2.h>
 #include <kernel/kernel.h>
+#include <kernel/idt.h>
+#include <kernel/isr.h>
+#include <kernel/gdt.h>
  
 // We need to tell the stivale bootloader where we want our stack to be.
 // We are going to allocate our stack as an uninitialised array in .bss.
 static uint8_t stack[4096];
+//extern void kmain();
  
 // stivale2 uses a linked list of tags for both communicating TO the
 // bootloader, or receiving info FROM it. More information about these tags
@@ -122,10 +127,20 @@ void _start(struct stivale2_struct *stivale2_struct) {
     
     // We should now be able to call the above function pointer to print out
     // a simple "Hello World" to screen.
-    printf("Hello World");
+    //printf("Hello World");
  
     // We're done, just hang...
-    for (;;) {
-        asm ("hlt");
-    }
+    //for (;;) {
+    //    asm ("hlt");
+    //}
+
+//    kmain();
+//}
+
+//void kmain() {
+	printf("kernel: Initializing GDT...");
+	load_gdt();
+	printf("kernel: Initializing IDT...");
+	isr_install();
+	printf("Hello World!");
 }

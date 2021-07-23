@@ -44,8 +44,10 @@ INTERNALLDFLAGS :=         \
  
 # Use find to glob all *.c files in the directory and extract the object names.
 CFILES      := $(shell find ./ -type f -name '*.c')
+ASMFILES    := $(shell find ./ -type f -name '*.s')
 LIBC_CFILES := $(shell find ../libc/ -type f -name '*.c')
 OBJ         := $(addprefix ../../build/kernel/,$(notdir $(CFILES:.c=.o)))
+ASMOBJ      := $(addprefix ../../build/kernel/,$(notdir $(ASMFILES:.s=.s.o)))
 LIBC_OBJ    := $(addprefix ../../build/libc/,$(LIBC_CFILES:.c=.libk.o))
  
 # Targets that do not actually build a file of the same name.
@@ -58,13 +60,18 @@ all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ]; \
 	$(KERNEL)
  
 # Link rules for the final kernel executable.
-$(KERNEL): $(OBJ)
-	$(CC) $(OBJ) $(LIBC_OBJ) $(CFLAGS) -target x86_64-linux-elf -nostdlib -Wl,linker.ld $(INTERNALCFLAGS) -o ../../build/kernel/$@ -fuse-ld=lld
+$(KERNEL): $(ASMOBJ) $(OBJ)
+	$(CC) $(OBJ) $(ASMOBJ) $(LIBC_OBJ) $(CFLAGS) -target x86_64-linux-elf -nostdlib -Wl,linker.ld $(INTERNALCFLAGS) -o ../../build/kernel/$@ -fuse-ld=lld
  
 # Compilation rules for *.c files.
 ../../build/kernel/%.o: %.c
 	$(CC) $(CFLAGS) -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o $@
- 
+
+# Compilation rules for *.c files.
+../../build/kernel/%.s.o: %.s
+	#$(CC) $(CFLAGS) -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o $@
+	nasm -felf64 $< -o $@
+
 # Remove object files and the final executable.
 clean:
 	rm -rf ../../build
