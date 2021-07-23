@@ -1,5 +1,5 @@
-# <center>![FaruOS](logo.png)</center>
-<center>A simple operating system, made with stivale2 and limine</center>
+# <p align="center">![FaruOS][logo]{width=200px}</p>
+<p align="center">A simple operating system, made with stivale2 and limine</p>
 
 ## Requirements
 * LLVM/Clang (because compiling x86-64-elf-gcc is a pain in the butt)
@@ -27,3 +27,5 @@ make
 - [ ] Making the OS POSIX compliant
 - [ ] Implement an ELF binary loader
 - [ ] Implement a GUI
+
+[logo]: ./logo.png "FaruOS logo"
