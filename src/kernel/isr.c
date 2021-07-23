@@ -68,7 +68,7 @@ __attribute__((interrupt)) static void isr12(struct interrupt_frame* frame) {
 }
 
 __attribute__((interrupt)) static void isr13(struct interrupt_frame* frame) {
-    panic("kernel: panic: General Protection Fault");
+    panic("general protection fault");
 
 //    panic("heres some info:");
 

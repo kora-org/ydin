@@ -143,7 +143,8 @@ void kmain() {
 	printf(" |  _| (_| | |  | |_| |\033[0m (_) \\__ \\\n\033[44m");
 	printf(" |_|  \\__,_|_|   \\__,_|\033[0m\\___/|___/\n\033[44m");
 	printf("                       \033[0m                    \n");
-	printf("version dev\n\n");
+	printf("version dev\n");
+	printf("Copyright © 2021 Leap of Azzam\n\n");
 	printf("kernel: Initializing IDT...");
 	isr_install();
 	printf("                                                                              [ \033[32mOK \033[0m]\n");

@@ -1,4 +1,4 @@
-# <p align="center"><img src="logo.png" width="200px" /></p>
+# <p align="center"><img src="logo.png" width="200px" alt="FaruOS"/></p>
 <p align="center">A simple operating system, made with stivale2 and limine</p>
 
 ## Requirements
@@ -27,3 +27,8 @@ make
 - [ ] Making the OS POSIX compliant
 - [ ] Implement an ELF binary loader
 - [ ] Implement a GUI
+
+## Sources
+* [limine-barebones](https://github.com/limine-bootloader/limine-barebones)/[stivale2-barebones](https://github.com/limine-bootloader/limine-barebones/tree/master/stivale2-barebones) and [OSDev Wiki](https://wiki.osdev.org/) [Stivale Bare Bones](https://wiki.osdev.org/Stivale_Bare_Bones) for the base
+* [Meaty Skeleton](https://wiki.osdev.org/Meaty_Skeleton) for libc implementation
+* [HhhOS](https://git.hippoz.xyz/tunacangamer/HhhOS/) for interrupt implementation (thats a very obscure source bruh)
