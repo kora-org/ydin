@@ -138,9 +138,9 @@ void _start(struct stivale2_struct *stivale2_struct) {
 //}
 
 //void kmain() {
-	printf("kernel: Initializing GDT...");
-	load_gdt();
-	printf("kernel: Initializing IDT...");
+	printf("kernel: Initializing IDT...\n");
 	isr_install();
+	printf("kernel: Initializing GDT...\n");
+	load_gdt();
 	printf("Hello World!");
 }

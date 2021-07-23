@@ -74,4 +74,4 @@ $(KERNEL): $(ASMOBJ) $(OBJ)
 
 # Remove object files and the final executable.
 clean:
-	rm -rf ../../build
+	rm -rf ../../build/kernel
