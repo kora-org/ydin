@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 
 static unsigned long int next = 1;
 int random_seed = 0;

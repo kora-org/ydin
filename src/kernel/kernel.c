@@ -9,6 +9,7 @@
 #include <kernel/isr.h>
 #include <kernel/gdt.h>
 #include <kernel/pic.h>
+#include <kernel/pit.h>
 #include <kernel/rtc.h>
 #include <kernel/apic.h>
 #include <kernel/panic.h>
@@ -164,16 +165,17 @@ void kmain(struct stivale2_struct *stivale2_struct) {
 	printf("version %s\n", FARUOS_VERSION);
 	printf("Copyright (C) 2021 Leap of Azzam\n\n");
 	printf("info: Bootloader: %s %s\n", stivale2_struct->bootloader_brand, stivale2_struct->bootloader_version);
-	/* initializing gdt crashes the system for some reason
 	printf("kernel: Initializing GDT...");
 	init_gdt();
 	printf(" [ \033[32mOK \033[0m]\n");
-	*/
 	printf("kernel: Initializing PIC...");
 	init_pic();
 	printf(" [ \033[32mOK \033[0m]\n");
 	printf("kernel: Initializing APIC...");
 	enable_apic();
+	printf(" [ \033[32mOK \033[0m]\n");
+	printf("kernel: Initializing PIT...");
+	init_pit(1000);
 	printf(" [ \033[32mOK \033[0m]\n");
 	printf("kernel: Initializing interrupts...");
 	isr_install();
