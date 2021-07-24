@@ -166,7 +166,7 @@ void kmain(struct stivale2_struct *stivale2_struct) {
 	printf("info: Bootloader: %s %s\n", stivale2_struct->bootloader_brand, stivale2_struct->bootloader_version);
 	/* initializing gdt crashes the system for some reason
 	printf("kernel: Initializing GDT...");
-	gdt_init();
+	init_gdt();
 	printf(" [ \033[32mOK \033[0m]\n");
 	*/
 	printf("kernel: Initializing PIC...");
