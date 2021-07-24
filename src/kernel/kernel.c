@@ -1,10 +1,19 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 #include <stivale/stivale2.h>
 #include <kernel/kernel.h>
+#include <kernel/io.h>
 #include <kernel/idt.h>
 #include <kernel/isr.h>
+#include <kernel/gdt.h>
+#include <kernel/pic.h>
+#include <kernel/rtc.h>
+#include <kernel/apic.h>
+#include <kernel/panic.h>
+#include <kernel/serial.h>
+#include <kernel/keyboard.h>
  
 // We need to tell the stivale bootloader where we want our stack to be.
 // We are going to allocate our stack as an uninitialised array in .bss.
@@ -145,6 +154,7 @@ void _start(struct stivale2_struct *stivale2_struct) {
 }
 
 void kmain(struct stivale2_struct *stivale2_struct) {
+	init_serial();
 	printf("\033[44m   __                  \033[0m          \n\033[44m");
 	printf("  / _| __ _ _ __ _   _ \033[0m ___  ___ \n\033[44m");
 	printf(" | |_ / _` | '__| | | |\033[0m/ _ \\/ __|\n\033[44m");
@@ -154,12 +164,26 @@ void kmain(struct stivale2_struct *stivale2_struct) {
 	printf("version %s\n", FARUOS_VERSION);
 	printf("Copyright (C) 2021 Leap of Azzam\n\n");
 	printf("info: Bootloader: %s %s\n", stivale2_struct->bootloader_brand, stivale2_struct->bootloader_version);
+	/* initializing gdt crashes the system for some reason
+	printf("kernel: Initializing GDT...");
+	gdt_init();
+	printf(" [ \033[32mOK \033[0m]\n");
+	*/
+	printf("kernel: Initializing PIC...");
+	init_pic();
+	printf(" [ \033[32mOK \033[0m]\n");
+	printf("kernel: Initializing APIC...");
+	enable_apic();
+	printf(" [ \033[32mOK \033[0m]\n");
 	printf("kernel: Initializing interrupts...");
 	isr_install();
 	printf(" [ \033[32mOK \033[0m]\n");
 	printf("\n");
-	printf("Hello world! Shell is coming soon!");
-	for (;;) {
-		asm ("hlt");
+	printf("Welcome to FaruOS!\n");
+	while (true) {
+		printf((char*) get_key_char());
 	}
+	//for (;;) {
+	//	asm ("hlt");
+	//}
 }

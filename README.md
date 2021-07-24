@@ -32,3 +32,4 @@ make
 * [limine-barebones](https://github.com/limine-bootloader/limine-barebones)/[stivale2-barebones](https://github.com/limine-bootloader/limine-barebones/tree/master/stivale2-barebones) and [OSDev Wiki](https://wiki.osdev.org/) [Stivale Bare Bones](https://wiki.osdev.org/Stivale_Bare_Bones) for the base
 * [Meaty Skeleton](https://wiki.osdev.org/Meaty_Skeleton) for libc implementation
 * [HhhOS](https://git.hippoz.xyz/tunacangamer/HhhOS/) for interrupt implementation (thats a very obscure source bruh)
+* And a bunch of other stuff, licensed with GPL, LGPL, BSD, MIT, and Apache license

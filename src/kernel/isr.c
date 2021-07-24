@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <kernel/isr.h>
+#include <kernel/panic.h>
 
 __attribute__((interrupt)) static void isr0(struct interrupt_frame* frame) {
     panic("division by zero");

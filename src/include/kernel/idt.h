@@ -22,6 +22,7 @@ struct interrupt_frame {
 };
 
 void idt_init();
+void enable_idt();
 void disable_idt();
 void idt_register_handler(uint8_t interrupt, unsigned long address);
 

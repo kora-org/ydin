@@ -9,10 +9,9 @@ extern "C" {
  
 __attribute__((__noreturn__))
 void abort(void);
-
-__attribute__((__noreturn__))
-void panic(const char*);
-
+int rand(void);
+void srand(unsigned int seed);
+int maxrand(int seed, int max);
 #ifdef __cplusplus
 }
 #endif

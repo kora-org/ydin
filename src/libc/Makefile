@@ -8,7 +8,7 @@ CC = clang -fuse-ld=lld
 LD = ld.lld
  
 # User controllable CFLAGS.
-CFLAGS = -Wall -Wextra -O2 -pipe -D__is_libc
+CFLAGS = -Wall -Wextra -O2 -pipe -ansi -D__is_libc
  
 # User controllable linker flags. We set none by default.
 LDFLAGS =
