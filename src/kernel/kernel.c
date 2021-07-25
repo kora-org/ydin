@@ -1,9 +1,11 @@
+#define SSFN_CONSOLEBITMAP_TRUECOLOR
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stivale/stivale2.h>
 #include <kernel/kernel.h>
+#include <ssfn.h>
 #include <kernel/io.h>
 #include <kernel/idt.h>
 #include <kernel/isr.h>
@@ -20,6 +22,7 @@
 // We are going to allocate our stack as an uninitialised array in .bss.
 static uint8_t stack[4096];
 extern void kmain(struct stivale2_struct *stivale2_struct);
+extern unsigned char _binary_u_vga16_sfn_start;
  
 // stivale2 uses a linked list of tags for both communicating TO the
 // bootloader, or receiving info FROM it. More information about these tags
@@ -119,12 +122,15 @@ void *stivale2_get_tag(struct stivale2_struct *stivale2_struct, uint64_t id) {
 }
 
 void (*term_write)(const char *string, size_t length);
+uint8_t *fb_addr;
 
 // The following will be our kernel's entry point.
 void _start(struct stivale2_struct *stivale2_struct) { 	
     // Let's get the terminal structure tag from the bootloader.
     struct stivale2_struct_tag_terminal *term_str_tag;
+    struct stivale2_struct_tag_framebuffer *fb_str_tag;
     term_str_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID);
+    fb_str_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID);
  
     // Check if the tag was actually found.
     if (term_str_tag == NULL) {
@@ -141,6 +147,7 @@ void _start(struct stivale2_struct *stivale2_struct) {
     // matches the prototype described in the stivale2 specification for
     // the stivale2_term_write function.
     term_write = term_write_ptr;
+    fb_addr = (uint8_t *)fb_str_tag->framebuffer_addr;
     
     // We should now be able to call the above function pointer to print out
     // a simple "Hello World" to screen.
@@ -151,6 +158,15 @@ void _start(struct stivale2_struct *stivale2_struct) {
     //    asm ("hlt");
     //}
 
+    /* set up context by global variables */
+    ssfn_src = &_binary_u_vga16_sfn_start;      /* the bitmap font to use */
+    ssfn_dst.ptr = fb_addr;                     /* framebuffer address and bytes per line */
+    ssfn_dst.p = 4096;
+    ssfn_dst.fg = 0xFFFFFFFF;                   /* colors, white on black */
+    ssfn_dst.bg = 0;
+    ssfn_dst.x = 64;                            /* coordinates to draw to */
+    ssfn_dst.y = 64;
+    
     kmain(stivale2_struct);
 }
 
@@ -182,8 +198,9 @@ void kmain(struct stivale2_struct *stivale2_struct) {
 	printf(" [ \033[32mOK \033[0m]\n");
 	printf("\n");
 	printf("Welcome to FaruOS!\n");
+	
 	while (true) {
-		printf((char*) get_key_char());
+		printf(get_key());
 	}
 	//for (;;) {
 	//	asm ("hlt");

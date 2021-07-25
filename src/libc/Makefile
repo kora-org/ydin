@@ -8,7 +8,7 @@ CC = clang -fuse-ld=lld
 LD = ld.lld
  
 # User controllable CFLAGS.
-CFLAGS = -Wall -Wextra -O2 -pipe -ansi -D__is_libc
+CFLAGS = -Wall -Wextra -O2 -pipe -D__is_libc
  
 # User controllable linker flags. We set none by default.
 LDFLAGS =
@@ -30,7 +30,9 @@ INTERNALCFLAGS  :=         \
  
 # Use find to glob all *.c files in the directory and extract the object names.
 CFILES   := $(shell find ./ -type f -name '*.c')
+ASMFILES := $(shell find ./ -type f -name '*.s')
 OBJ      := $(CFILES:.c=.o)
+ASMOBJ   := $(ASMFILES:.s=.s.o)
 LIBK_OBJ := $(OBJ:.o=.libk.o)
  
 # Targets that do not actually build a file of the same name.
@@ -43,13 +45,13 @@ all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/libc" ] || [ ! -d 
 	 mkdir -p ../../build/libc/stdlib; \
 	 mkdir -p ../../build/libc/stdio; \
 	 fi;) \
-	libc.a libk.a
+	$(ASMOBJ) libc.a libk.a
 
-libc.a: $(OBJ)
-	cd ../../build/libc; $(AR) rcs $@ $(OBJ)
+libc.a: $(OBJ) 
+	cd ../../build/libc; $(AR) rcs $@ $(OBJ) $(ASMOBJ)
 
 libk.a: $(LIBK_OBJ)
-	cd ../../build/libc; $(AR) rcs $@ $(LIBK_OBJ)
+	cd ../../build/libc; $(AR) rcs $@ $(LIBK_OBJ) $(ASMOBJ)
 
 # Compilation rules for *.c files.
 %.o: %.c
@@ -57,6 +59,11 @@ libk.a: $(LIBK_OBJ)
 
 %.libk.o: %.c
 	$(CC) $(CFLAGS) -D__is_libk -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o ../../build/libc/$@
+
+# Compilation rules for *.c files.
+%.s.o: %.s
+	#$(CC) $(CFLAGS) -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o $@
+	nasm -felf64 $< -o ../../build/libc/$@
  
 # Remove object files and the final executable.
 clean:

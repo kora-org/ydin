@@ -13,7 +13,7 @@ CC = clang -fuse-ld=lld
 LD = ld.lld
  
 # User controllable CFLAGS.
-CFLAGS = -Wall -Wextra -O2 -pipe -ansi
+CFLAGS = -Wall -Wextra -O2 -pipe
  
 # User controllable linker flags. We set none by default.
 LDFLAGS =
@@ -45,12 +45,16 @@ INTERNALLDFLAGS :=         \
 	-ztext
  
 # Use find to glob all *.c files in the directory and extract the object names.
-CFILES      := $(shell find ./ -type f -name '*.c')
-ASMFILES    := $(shell find ./ -type f -name '*.s')
-LIBC_CFILES := $(shell find ../libc/ -type f -name '*.c')
-OBJ         := $(addprefix ../../build/kernel/,$(notdir $(CFILES:.c=.o)))
-ASMOBJ      := $(addprefix ../../build/kernel/,$(notdir $(ASMFILES:.s=.s.o)))
-LIBC_OBJ    := $(addprefix ../../build/libc/,$(LIBC_CFILES:.c=.libk.o))
+CFILES        := $(shell find ./ -type f -name '*.c')
+ASMFILES      := $(shell find ./ -type f -name '*.s')
+SSFNFILES     := $(shell find ./ -type f -name '*.sfn')
+LIBC_CFILES   := $(shell find ../libc/ -type f -name '*.c')
+LIBC_ASMFILES := $(shell find ../libc/ -type f -name '*.s')
+OBJ           := $(addprefix ../../build/kernel/,$(notdir $(CFILES:.c=.o)))
+ASMOBJ        := $(addprefix ../../build/kernel/,$(notdir $(ASMFILES:.s=.s.o)))
+SSFNOBJ       := $(addprefix ../../build/kernel/,$(notdir $(SSFNFILES:.sfn=.sfn.o)))
+LIBC_OBJ      := $(addprefix ../../build/libc/,$(LIBC_CFILES:.c=.libk.o))
+LIBC_ASMOBJ   := $(addprefix ../../build/libc/,$(LIBC_ASMFILES:.s=.s.o))
  
 # Targets that do not actually build a file of the same name.
 .PHONY: all clean
@@ -62,8 +66,8 @@ all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ]; \
 	$(KERNEL)
  
 # Link rules for the final kernel executable.
-$(KERNEL): $(ASMOBJ) $(OBJ)
-	$(CC) $(OBJ) $(ASMOBJ) $(LIBC_OBJ) $(CFLAGS) -target x86_64-linux-elf -nostdlib -Wl,linker.ld $(INTERNALCFLAGS) -o ../../build/kernel/$@ -fuse-ld=lld
+$(KERNEL): $(ASMOBJ) $(OBJ) $(SSFNOBJ)
+	$(CC) $(OBJ) $(ASMOBJ) $(SSFNOBJ) $(LIBC_OBJ) $(LIBC_ASMOBJ) $(CFLAGS) -target x86_64-linux-elf -nostdlib -Wl,linker.ld $(INTERNALCFLAGS) -o ../../build/kernel/$@ -fuse-ld=lld
  
 # Compilation rules for *.c files.
 ../../build/kernel/%.o: %.c
@@ -73,6 +77,11 @@ $(KERNEL): $(ASMOBJ) $(OBJ)
 ../../build/kernel/%.s.o: %.s
 	#$(CC) $(CFLAGS) -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o $@
 	nasm -felf64 $< -o $@
+
+# Compilation rules for *.c files.
+../../build/kernel/%.sfn.o: %.sfn
+	#$(CC) $(CFLAGS) -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o $@
+	llvm-objcopy -I binary -O elf64-x86-64 $< $@
 
 # Remove object files and the final executable.
 clean:
