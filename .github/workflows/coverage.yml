@@ -1,0 +1,30 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install LLVM and Clang
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "10.0"
+    - name: Generate coverage report
+      run: |
+        CFLAGS="-coverage" make
+        gcov build/kernel/*.gcno build/libc/*.gcno
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        directory: ./build/
+        files: kernel/*.gcno build/*.gcno
+        verbose: true
+ 
