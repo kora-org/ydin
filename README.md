@@ -1,6 +1,9 @@
 # <p align="center">![FaruOS](logo_w_bg.png)</p>
 <p align="center">A simple operating system, made with stivale2 and limine</p>
 
+###### <p align="center">![Made with C](https://forthebadge.com/images/badges/made-with-c.svg) ![Gluten-free](https://forthebadge.com/images/badges/gluten-free.svg) ![Built with <3](https://forthebadge.com/images/badges/built-with-love.svg) [![Support Server](https://img.shields.io/discord/870148344205443073.svg?label=&logo=discord&logoColor=ffffff&color=5865F2&style=for-the-badge)](https://discord.gg/KvbDSaF5fr)</p>
+<!-- centered image with link doesn't work outside header -->
+
 ## Requirements
 * LLVM/Clang (because compiling x86-64-elf-gcc is a pain in the butt)
 
