@@ -31,8 +31,14 @@ make
 - [ ] Implement an ELF binary loader
 - [ ] Implement a GUI
 
-## Sources
+## Acknowledgement
 * [limine-barebones](https://github.com/limine-bootloader/limine-barebones)/[stivale2-barebones](https://github.com/limine-bootloader/limine-barebones/tree/master/stivale2-barebones) and [OSDev Wiki](https://wiki.osdev.org/) [Stivale Bare Bones](https://wiki.osdev.org/Stivale_Bare_Bones) for the base
 * [Meaty Skeleton](https://wiki.osdev.org/Meaty_Skeleton) for libc implementation
 * [HhhOS](https://git.hippoz.xyz/tunacangamer/HhhOS/) for interrupt implementation (thats a very obscure source bruh)
 * And a bunch of other stuff, licensed with GPL, LGPL, BSD, MIT, and Apache license
+
+## License
+<a href="https://www.gnu.org/licenses/agpl-3.0.en.html"><img align="right" height="64" alt="GNU AGPL v3 logo" src="https://upload.wikimedia.org/wikipedia/commons/0/06/AGPLv3_Logo.svg"/></a>
+The FaruOS operating system and some of it's components are licensed under GNU Affero General Public License.
+
+The full text of the license can be accessed via this [link](https://www.gnu.org/licenses/agpl-3.0.en.html) and is also included in the [license file](LICENSE) of this software package.
