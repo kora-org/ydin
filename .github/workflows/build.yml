@@ -1,5 +1,4 @@
-name: Code Coverage
-
+name: Build
 on:
   push:
     branches: [ main ]
@@ -19,12 +18,4 @@ jobs:
         version: "10.0"
     - name: Generate coverage report
       run: |
-        CFLAGS="-coverage" make
-        gcov build/kernel/*.gcno build/libc/*.gcno
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
-      with:
-        directory: ./build/
-        files: kernel/*.gcno build/*.gcno
-        verbose: true
- 
+        make -j$(nproc)
