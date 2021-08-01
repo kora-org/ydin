@@ -21,4 +21,6 @@ jobs:
         git submodule init
         git submodule update
         make -C limine -j$(nproc)
+        make -C src/libc -j$(nproc)
+        make -C src/kernel -j$(nproc)
         make -j$(nproc)
