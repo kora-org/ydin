@@ -20,4 +20,5 @@ jobs:
       run: |
         git submodule init
         git submodule update
+        make -C limine -j$(nproc)
         make -j$(nproc)
