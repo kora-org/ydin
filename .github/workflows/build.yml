@@ -16,6 +16,6 @@ jobs:
       uses: KyleMayes/install-llvm-action@v1
       with:
         version: "10.0"
-    - name: Generate coverage report
+    - name: Build FaruOS
       run: |
         make -j$(nproc)
