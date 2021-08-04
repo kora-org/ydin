@@ -198,9 +198,8 @@ void kmain(struct stivale2_struct *stivale2_struct) {
 	printf(" [ \033[32mOK \033[0m]\n");
 	printf("\n");
 	printf("Welcome to FaruOS!\n");
-	
 	while (true) {
-		printf(get_key());
+		printf("%s", get_key());
 	}
 	//for (;;) {
 	//	asm ("hlt");

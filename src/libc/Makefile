@@ -6,26 +6,29 @@ CC = clang -fuse-ld=lld
 # Likewise, "ld" here is just a placeholder and your mileage may vary if using the
 # host's "ld".
 LD = ld.lld
+
+AR = llvm-ar
  
 # User controllable CFLAGS.
-CFLAGS = -Wall -Wextra -O2 -pipe -D__is_libc
+CFLAGS = -Wall -Wextra -O2 -pipe -D__is_libc -DPRINTF_DISABLE_SUPPORT_FLOAT
  
 # User controllable linker flags. We set none by default.
 LDFLAGS =
  
 # Internal C flags that should not be changed by the user.
-INTERNALCFLAGS  :=         \
-	-D__is_libc            \
-	-I../include           \
-	-std=gnu11             \
-	-ffreestanding         \
-	-fno-stack-protector   \
-	-fno-pic -fpie         \
-	-mno-80387             \
-	-mno-mmx               \
-	-mno-3dnow             \
-	-mno-sse               \
-	-mno-sse2              \
+INTERNALCFLAGS  :=          \
+	-D__is_libc             \
+	-I../include            \
+	-std=gnu11              \
+	-ffreestanding          \
+	-fno-stack-protector    \
+	-fno-omit-frame-pointer \
+	-fno-pic -fpie          \
+	-mno-80387              \
+	-mno-mmx                \
+	-mno-3dnow              \
+	-mno-sse                \
+	-mno-sse2               \
 	-mno-red-zone
  
 # Use find to glob all *.c files in the directory and extract the object names.
@@ -48,7 +51,7 @@ all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/libc" ] || [ ! -d 
 	$(ASMOBJ) libc.a libk.a
 
 libc.a: $(OBJ) 
-	cd ../../build/libc; $(AR) rcs $@ $(OBJ) $(ASMOBJ)
+	cd ../../build/libc; $(AR) rcs $@ $(OBJ) $(ASMOBJ) 
 
 libk.a: $(LIBK_OBJ)
 	cd ../../build/libc; $(AR) rcs $@ $(LIBK_OBJ) $(ASMOBJ)

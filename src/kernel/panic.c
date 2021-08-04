@@ -26,13 +26,22 @@ char *random_message[] = {
 
 __attribute__((__noreturn__))
 void panic(const char *err) {
+    uint8_t* rip = __builtin_return_address(0);
+    uint64_t* rbp = __builtin_frame_address(0);
 	// TODO: Add proper kernel panic.
 	printf("\n------------------------------------------------------\n");
 	printf("KERNEL PANIC                     \n");
 	printf(random_message[rand() % 18]);
 	printf("\n");
 	printf("Cause: %s\n", err);
-	for (int i; i = 0; i++) {}
+	printf("Stack trace:\n");
+	while(rbp) {
+	  printf("0x%p ", &rip);
+	  printf("0x%p ", &rbp);
+	  printf("\n");
+	  rip = *(rbp - 1);
+	  rbp = *(rbp + 0);
+	}
 	disable_idt();
 	asm("hlt");
 	__builtin_unreachable();

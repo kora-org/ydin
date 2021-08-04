@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <kernel/isr.h>
 #include <kernel/panic.h>
 
@@ -69,6 +70,7 @@ __attribute__((interrupt)) static void isr12(struct interrupt_frame* frame) {
 }
 
 __attribute__((interrupt)) static void isr13(struct interrupt_frame* frame) {
+    printf("general protection fault\nip: %s\nsp: %s\ncs: %s", itoa(frame->ip), itoa(frame->sp), itoa(frame->cs));
     panic("general protection fault");
 
 //    panic("heres some info:");

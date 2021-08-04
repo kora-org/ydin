@@ -25,6 +25,7 @@ INTERNALCFLAGS  :=                  \
 	-std=gnu11                      \
 	-ffreestanding                  \
 	-fno-stack-protector            \
+	-fno-omit-frame-pointer         \
 	-fno-pic -fpie                  \
 	-mno-80387                      \
 	-mno-mmx                        \
@@ -42,7 +43,8 @@ INTERNALLDFLAGS :=         \
 	-static                \
 	-pie                   \
 	--no-dynamic-linker    \
-	-ztext
+	-ztext                 \
+	-z muldefs
  
 # Use find to glob all *.c files in the directory and extract the object names.
 CFILES        := $(shell find ./ -type f -name '*.c')
@@ -67,7 +69,7 @@ all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ]; \
  
 # Link rules for the final kernel executable.
 $(KERNEL): $(ASMOBJ) $(OBJ) $(SSFNOBJ)
-	$(CC) $(OBJ) $(ASMOBJ) $(SSFNOBJ) $(LIBC_OBJ) $(LIBC_ASMOBJ) $(CFLAGS) -target x86_64-linux-elf -nostdlib -Wl,linker.ld $(INTERNALCFLAGS) -o ../../build/kernel/$@ -fuse-ld=lld
+	$(LD) $(OBJ) $(ASMOBJ) $(SSFNOBJ) ../../build/libc/libc.a ../../build/libc/libk.a ../libgcc.a $(LDFLAGS) $(INTERNALLDFLAGS) -o ../../build/kernel/$@ 
  
 # Compilation rules for *.c files.
 ../../build/kernel/%.o: %.c

@@ -15,6 +15,8 @@ void* memmove(void*, const void*, size_t);
 void* memset(void*, int, size_t);
 size_t strlen(const char*);
 int atoi(char *str);
+char* itoa(int res);
+void reverse(char *str);
  
 #ifdef __cplusplus
 }

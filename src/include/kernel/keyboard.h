@@ -225,4 +225,4 @@ enum kb_keycode {
 typedef enum kb_keycode kb_keycode;
 
 kb_keycode get_keycode();//returns any keycode
-char get_key();//returns only valid ascii codepoints
+char* get_key();//returns only valid ascii codepoints
