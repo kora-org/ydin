@@ -22,7 +22,7 @@
 // We are going to allocate our stack as an uninitialised array in .bss.
 static uint8_t stack[4096];
 extern void kmain(struct stivale2_struct *stivale2_struct);
-extern unsigned char _binary_u_vga16_sfn_start;
+extern unsigned char _binary_unifont_sfn_start;
  
 // stivale2 uses a linked list of tags for both communicating TO the
 // bootloader, or receiving info FROM it. More information about these tags
@@ -53,7 +53,12 @@ struct stivale2_header_tag_smp smp_hdr_tag = {
     },
     .flags = 0
 };
- 
+
+static struct stivale2_tag unmap_null_hdr_tag = {
+    .identifier = STIVALE2_HEADER_TAG_UNMAP_NULL_ID,
+    .next = (uint64_t)&smp_hdr_tag,
+};
+
 // We are now going to define a framebuffer header tag, which is mandatory when
 // using the stivale2 terminal.
 // This tag tells the bootloader that we want a graphical framebuffer instead
@@ -65,7 +70,7 @@ static struct stivale2_header_tag_framebuffer framebuffer_hdr_tag = {
         .identifier = STIVALE2_HEADER_TAG_FRAMEBUFFER_ID,
         // Instead of 0, we now point to the previous header tag. The order in
         // which header tags are linked does not matter.0
-        .next = (uint64_t)&smp_hdr_tag
+        .next = (uint64_t)&unmap_null_hdr_tag
     },
     // We set all the framebuffer specifics to 0 as we want the bootloader
     // to pick the best it can.
@@ -147,6 +152,8 @@ void _start(struct stivale2_struct *stivale2_struct) {
     // matches the prototype described in the stivale2 specification for
     // the stivale2_term_write function.
     term_write = term_write_ptr;
+    term_cols = (uint16_t *)term_str_tag->cols;
+    term_rows = (uint16_t *)term_str_tag->rows;
     fb_addr = (uint8_t *)fb_str_tag->framebuffer_addr;
     
     // We should now be able to call the above function pointer to print out
@@ -157,15 +164,6 @@ void _start(struct stivale2_struct *stivale2_struct) {
     //for (;;) {
     //    asm ("hlt");
     //}
-
-    /* set up context by global variables */
-    ssfn_src = &_binary_u_vga16_sfn_start;      /* the bitmap font to use */
-    ssfn_dst.ptr = fb_addr;                     /* framebuffer address and bytes per line */
-    ssfn_dst.p = 4096;
-    ssfn_dst.fg = 0xFFFFFFFF;                   /* colors, white on black */
-    ssfn_dst.bg = 0;
-    ssfn_dst.x = 64;                            /* coordinates to draw to */
-    ssfn_dst.y = 64;
     
     kmain(stivale2_struct);
 }
@@ -185,9 +183,10 @@ void kmain(struct stivale2_struct *stivale2_struct) {
 	init_gdt();
 	printf(" [ \033[32mOK \033[0m]\n");
 	printf("kernel: Initializing PIC...");
-	init_pic();
+	pic_remap(0x20, 0x28);
 	printf(" [ \033[32mOK \033[0m]\n");
 	printf("kernel: Initializing APIC...");
+	pic_disable();
 	enable_apic();
 	printf(" [ \033[32mOK \033[0m]\n");
 	printf("kernel: Initializing PIT...");
@@ -198,8 +197,21 @@ void kmain(struct stivale2_struct *stivale2_struct) {
 	printf(" [ \033[32mOK \033[0m]\n");
 	printf("\n");
 	printf("Welcome to FaruOS!\n");
+	//panic("test");
+	char* c = "";
+	char* cmd = "";
 	while (true) {
-		printf("%s", get_key());
+		printf(" faru > ");
+		while ((c = get_key())) {
+			if (c == '\n') {
+				printf('\n');
+				printf(cmd);
+				printf('\n');
+				cmd = "";
+			}
+			printf("%c", c);
+			sprintf(cmd, "%c%c", cmd, c);
+		}
 	}
 	//for (;;) {
 	//	asm ("hlt");

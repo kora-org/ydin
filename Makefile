@@ -5,7 +5,7 @@ ISO_IMAGE = disk.iso
 all: $(ISO_IMAGE)
 
 run: $(ISO_IMAGE)
-	qemu-system-x86_64 -M q35 -m 2G -cdrom $(ISO_IMAGE)
+	qemu-system-x86_64 -M q35 -m 2G -serial mon:stdio -cdrom $(ISO_IMAGE)
 
 limine:
 	git clone https://github.com/limine-bootloader/limine.git --branch=v2.0-branch-binary --depth=1
@@ -36,7 +36,7 @@ $(ISO_IMAGE): limine libc kernel
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
 		iso_root -o $(ISO_IMAGE)
 	limine/limine-install $(ISO_IMAGE)
-	rm -rf iso_root
+	#rm -rf iso_root
 
 clean:
 	rm -f $(ISO_IMAGE)

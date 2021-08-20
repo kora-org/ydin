@@ -498,14 +498,21 @@ kb_keycode get_keycode() {
 }
 
 
-char* get_key() {
+char get_key() {
     kb_keycode k;
     while(k=get_keycode()){
         if(k<=0x127) {
-        	if(k==KEY_BACKSPACE_PRESSED){
-        		return "\b \b";
-        	}
-        	return (char[2]){(char)k, '\0'};//if keycode is valid ascii, return
+        	return k;//if keycode is valid ascii, return
         }
     }
+}
+
+char* kbd_handler() {
+	char k;
+	while(k=get_key()) {
+		if(k==KEY_BACKSPACE_PRESSED){
+			return "\b \b";
+		}
+		return k;
+	}
 }

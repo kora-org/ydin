@@ -12,7 +12,20 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
- 
+
+#define FS_FILE       0
+#define FS_DIRECTORY  1
+#define FS_INVALID    2
+typedef struct _FILE {
+	char        name[32];
+	uint32_t    flags;
+	uint32_t    fileLength;
+	uint32_t    id;
+	uint32_t    eof;
+	uint32_t    position;
+	uint32_t    currentCluster;
+	uint32_t    device;
+} FILE, *PFILE;
 int putchar(int);
 int puts(const char*);
 int printf_(const char* format, ...);

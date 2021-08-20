@@ -10,7 +10,7 @@ LD = ld.lld
 AR = llvm-ar
  
 # User controllable CFLAGS.
-CFLAGS = -Wall -Wextra -O2 -pipe -D__is_libc -DPRINTF_DISABLE_SUPPORT_FLOAT
+CFLAGS = -Wall -Wextra -g -O0 -pipe -D__is_libc -DPRINTF_DISABLE_SUPPORT_FLOAT
  
 # User controllable linker flags. We set none by default.
 LDFLAGS =
@@ -24,6 +24,7 @@ INTERNALCFLAGS  :=          \
 	-fno-stack-protector    \
 	-fno-omit-frame-pointer \
 	-fno-pic -fpie          \
+	-mabi=sysv              \
 	-mno-80387              \
 	-mno-mmx                \
 	-mno-3dnow              \
@@ -34,8 +35,10 @@ INTERNALCFLAGS  :=          \
 # Use find to glob all *.c files in the directory and extract the object names.
 CFILES   := $(shell find ./ -type f -name '*.c')
 ASMFILES := $(shell find ./ -type f -name '*.s')
+SSFNFILES:= $(shell find ./ -type f -name '*.sfn')
 OBJ      := $(CFILES:.c=.o)
 ASMOBJ   := $(ASMFILES:.s=.s.o)
+SSFNOBJ  := $(SSFNFILES:.sfn=.sfn.o)
 LIBK_OBJ := $(OBJ:.o=.libk.o)
  
 # Targets that do not actually build a file of the same name.
@@ -48,13 +51,13 @@ all: $(shell if [ ! -d "../../build" ] || [ ! -d "../../build/libc" ] || [ ! -d 
 	 mkdir -p ../../build/libc/stdlib; \
 	 mkdir -p ../../build/libc/stdio; \
 	 fi;) \
-	$(ASMOBJ) libc.a libk.a
+	$(ASMOBJ) $(SSFNOBJ) libc.a libk.a
 
 libc.a: $(OBJ) 
-	cd ../../build/libc; $(AR) rcs $@ $(OBJ) $(ASMOBJ) 
+	cd ../../build/libc; $(AR) rcs $@ $(OBJ) $(ASMOBJ) $(SSFNOBJ)
 
 libk.a: $(LIBK_OBJ)
-	cd ../../build/libc; $(AR) rcs $@ $(LIBK_OBJ) $(ASMOBJ)
+	cd ../../build/libc; $(AR) rcs $@ $(LIBK_OBJ) $(ASMOBJ) $(SSFNOBJ)
 
 # Compilation rules for *.c files.
 %.o: %.c
@@ -67,6 +70,11 @@ libk.a: $(LIBK_OBJ)
 %.s.o: %.s
 	#$(CC) $(CFLAGS) -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o $@
 	nasm -felf64 $< -o ../../build/libc/$@
+
+# Compilation rules for *.c files.
+%.sfn.o: %.sfn
+	#$(CC) $(CFLAGS) -target x86_64-none-elf $(INTERNALCFLAGS) -c $< -o $@
+	llvm-objcopy -I binary -O elf64-x86-64 $< ../../build/libc/$@
  
 # Remove object files and the final executable.
 clean:

@@ -188,7 +188,7 @@ enum kb_keycode {
     KEY_DOWN_PRESSED,
     KEY_PGDOWN_PRESSED,
     KEY_INSERT_PRESSED,
-    KEY_DELETE_PRESSED,
+    KEY_DELETE_PRESSED=127,
     KEY_LEFT_CMD_PRESSED,
     KEY_RIGHT_CMD_PRESSED,
     KEY_APPS_PRESSED,//???
@@ -225,4 +225,5 @@ enum kb_keycode {
 typedef enum kb_keycode kb_keycode;
 
 kb_keycode get_keycode();//returns any keycode
-char* get_key();//returns only valid ascii codepoints
+char get_key();//returns only valid ascii codepoints
+char* kbd_handler();

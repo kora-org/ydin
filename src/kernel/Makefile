@@ -1,7 +1,7 @@
 # This is the name that our final kernel executable will have.
 # Change as needed.
 KERNEL  := kernel.elf
-VERSION := dev
+VERSION := dev-$(shell git rev-parse HEAD)
  
 # It is highly recommended to use a custom built cross toolchain to build a kernel.
 # We are only using "cc" as a placeholder here. It may work by using
@@ -13,7 +13,7 @@ CC = clang -fuse-ld=lld
 LD = ld.lld
  
 # User controllable CFLAGS.
-CFLAGS = -Wall -Wextra -O2 -pipe
+CFLAGS = -Wall -Wextra -g -O0 -pipe
  
 # User controllable linker flags. We set none by default.
 LDFLAGS =
@@ -21,12 +21,14 @@ LDFLAGS =
 # Internal C flags that should not be changed by the user.
 INTERNALCFLAGS  :=                  \
 	-DFARUOS_VERSION='"$(VERSION)"' \
+	-D__is_kernel                   \
 	-I../include                    \
 	-std=gnu11                      \
 	-ffreestanding                  \
 	-fno-stack-protector            \
 	-fno-omit-frame-pointer         \
 	-fno-pic -fpie                  \
+	-mabi=sysv                      \
 	-mno-80387                      \
 	-mno-mmx                        \
 	-mno-3dnow                      \

@@ -38,6 +38,9 @@
 
 #include <string.h>
 #include <kernel/kernel.h>
+#include <kernel/serial.h>
+//#define SSFN_CONSOLEBITMAP_TRUECOLOR
+//#include <ssfn.h>
 
 // define this globally (e.g. gcc -DPRINTF_INCLUDE_CONFIG_H ...) to include the
 // printf_config.h header file
@@ -120,10 +123,29 @@
 #include <float.h>
 #endif
 
+extern unsigned char _binary_unifont_sfn_start;
+
 void _putchar(char character)
 {
   // send char to console etc.
+  init_serial();
+  write_serial(character);
   term_write(&character, 1);
+  /* set up context by global variables */
+  //ssfn_src = &_binary_unifont_sfn_start;      /* the bitmap font to use */
+  //ssfn_dst.ptr = fb_addr;                  /* framebuffer address and bytes per line */
+  //ssfn_dst.p = 4096;
+  //ssfn_dst.fg = 0xFFFFFFFF;                   /* colors, white on black */
+  //ssfn_dst.bg = 0;
+  //ssfn_dst.x = 0;                           /* coordinates to draw to */
+  //ssfn_dst.y = 0;
+  //if(character == '\n') {
+    //ssfn_dst.y += ssfn_src->height;
+    //ssfn_dst.x = 0;
+  //} else {
+    //ssfn_putc(character);
+  //}
+  //ssfn_dst.x += ssfn_src->width;
 }
 
 // output function type
