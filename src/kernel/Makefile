@@ -1,31 +1,28 @@
 KERNEL := ../../build/kernel/kernel.elf
 
 CC = clang -target x86_64-none-elf
+AS = nasm
 LD = ld.lld
 
-CFLAGS ?= -Wall -Wextra -O0 -g -pipe
+CFLAGS ?= -O0 -gdwarf -pipe
 LDFLAGS ?=
 
-INTERNALLDFLAGS :=               \
-	-Tlinker.ld                  \
-	-nostdlib                    \
-	-zmax-page-size=0x1000       \
-	-static                      \
-	-pie --no-dynamic-linker     \
+INTERNALLDFLAGS :=           \
+	-Tlinker.ld              \
+	-nostdlib                \
+	-zmax-page-size=0x1000   \
+	-static                  \
+	-pie --no-dynamic-linker \
 	-ztext -zmuldefs
 
-INTERNALCFLAGS  :=                 \
-	-I../include                   \
-	-I../../external/stivale       \
-	-nostdlib -std=gnu11           \
-	-ffreestanding                 \
-	-fno-stack-protector           \
-	-mcmodel=kernel                \
-	-MMD -fpie                     \
-	-mabi=sysv                     \
-	-mno-sse                       \
-	-mno-sse2                      \
-	-mno-red-zone
+INTERNALCFLAGS  :=           \
+	-I../include             \
+	-I../../external/stivale \
+	-nostdlib -std=gnu11     \
+	-ffreestanding -fwrapv   \
+	-fno-stack-protector     \
+	-mcmodel=kernel -MMD     \
+	-fpie -mno-red-zone
 
 CFILES := $(shell find ./ -type f -name '*.c')
 SFILES := $(shell find ./ -type f -name '*.s')
@@ -37,13 +34,16 @@ SOBJ   := $(patsubst %, ../../build/kernel/%, $(SFILES:.s=.s.o))
 all: $(shell [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ]; mkdir -p ../../build/kernel) $(KERNEL)
 
 $(KERNEL): $(OBJ) $(SOBJ)
-	$(LD) $(OBJ) $(SOBJ) ../../build/libc/libc.a $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
+	@echo "  LD  $(@:../../build/kernel/%=%)"
+	@$(LD) $(OBJ) $(SOBJ) ../../build/libc/libc.a $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
 
 ../../build/kernel/%.o: %.c
-	$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o $@
+	@echo "  CC  $<"
+	@$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o $@
 
 ../../build/kernel/%.s.o: %.s
-	nasm -felf64 $< -o $@
+	@echo "  AS  $<"
+	@$(AS) -felf64 -g -F dwarf $< -o $@
 
 clean:
-	rm -rf ../../build/kernel
+	@rm -rf ../../build/kernel

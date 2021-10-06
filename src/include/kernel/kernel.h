@@ -5,4 +5,4 @@
 uint16_t *term_cols;
 uint16_t *term_rows;
 void (*term_write)(const char *string, size_t length);
-void halt();
+void halt(void);

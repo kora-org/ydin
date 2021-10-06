@@ -4,6 +4,7 @@
 #include <stivale2.h>
 #include <kernel/kernel.h>
 #include <kernel/gdt.h>
+#include <kernel/idt.h>
 
 static uint8_t stack[4096];
 FILE scr_term;
@@ -60,7 +61,7 @@ void module_load(void (module)(), char* name) {
     printf("\033[32mOK\033[0m\n");
 }
 
-void halt() {
+void halt(void) {
     asm("hlt");
 }
 
@@ -81,7 +82,8 @@ void _start(struct stivale2_struct *stivale2_struct) {
     stdin = stdout = &scr_term;
     printf("Welcome to FaruOS!\n");
     printf("\n");
-    module_load(init_gdt, "GDT");
+    module_load(gdt_init, "GDT");
+    module_load(idt_init, "IDT");
     printf("Hello World!");
     panic("panic test");
 
