@@ -1,19 +1,6 @@
-#ifndef _STDLIB_H
-#define _STDLIB_H 1
- 
-#include <sys/cdefs.h>
- 
-#ifdef __cplusplus
-extern "C" {
-#endif
- 
-__attribute__((__noreturn__))
-void abort(void);
-int rand(void);
-void srand(unsigned int seed);
-int maxrand(int seed, int max);
-#ifdef __cplusplus
-}
-#endif
- 
-#endif
+#ifndef _STD_STDLIB_H
+#define _STD_STDLIB_H
+
+#include "fslc/fslc_stdlib.h"
+
+#endif /* _STD_STDLIB_H */

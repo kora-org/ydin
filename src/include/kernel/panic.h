@@ -1,2 +1,2 @@
-__attribute__((__noreturn__))
-void panic(const char *err);
+#pragma once
+void panic(const char* msg);
