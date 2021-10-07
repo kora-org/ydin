@@ -16,6 +16,7 @@ void panic(const char* msg) {
     }
     printf("[kernel] \n");
     printf("[kernel] System halted");
+    asm("cli");
     for (;;) {
         halt();
     }

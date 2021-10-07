@@ -28,11 +28,7 @@ static char *exceptions[] = {
 };
 
 void isr_handler(uint64_t irq) {
-    __asm__("cli");
     panic((char *)exceptions[irq]);
-    for (;;) {
-        halt();
-    }
 }
 
 void isr_0(void) {

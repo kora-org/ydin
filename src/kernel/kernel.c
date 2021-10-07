@@ -54,7 +54,7 @@ static int _putc(int c, FILE *stream) {
 
 void module_load(void (module)(), char* name) {
     printf("[kernel] Initializing %s...", name);
-    for (int i = 0; i < (int)term_cols - (strlen("[kernel] Initializing ") + strlen(name) + strlen("...")) - strlen("OK"); ++i) {
+    for (int i = 0; i < (int)term_cols - (strlen("[kernel] Initializing ") + strlen(name) + strlen("...")) - strlen("OK "); ++i) {
         printf(" ");
     }
     (module)();
