@@ -4,6 +4,7 @@
 #include <kernel/io.h>
 #include <kernel/idt.h>
 #include <kernel/isr.h>
+#include <kernel/pic.h>
 
 static idt_entry_t idt[256];
 static idtr_t idtr;
@@ -41,7 +42,7 @@ void* isr_table[32] = {
     isr_reserved,
     isr_reserved,
     isr_30,
-    isr_reserved
+    pic_remap
 };
 
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
