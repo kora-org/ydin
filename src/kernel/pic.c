@@ -19,10 +19,10 @@ void pic_remap(void) {
 }
 
 void pic_eoi(unsigned char irq) {
-	if (irq >= 8)
-		outb(0xA0, 0x20);
+    if (irq >= 8)
+        outb(0xA0, 0x20);
  
-	outb(0x20, 0x20);
+    outb(0x20, 0x20);
 }
 
 void irq_set_mask(uint8_t irq) {
