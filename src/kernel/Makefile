@@ -7,7 +7,7 @@ LD = ld.lld
 CFLAGS ?= -O0 -gdwarf -pipe
 LDFLAGS ?=
 
-INTERNALLDFLAGS :=           \
+INTERNALLDFLAGS :=               \
 	-Tlinker.ld              \
 	-nostdlib                \
 	-zmax-page-size=0x1000   \
@@ -15,7 +15,7 @@ INTERNALLDFLAGS :=           \
 	-pie --no-dynamic-linker \
 	-ztext -zmuldefs
 
-INTERNALCFLAGS  :=           \
+INTERNALCFLAGS  :=               \
 	-I../include             \
 	-I../../external/stivale \
 	-nostdlib -std=gnu11     \
@@ -34,15 +34,15 @@ SOBJ   := $(patsubst %, ../../build/kernel/%, $(SFILES:.s=.s.o))
 all: $(shell [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ]; mkdir -p ../../build/kernel) $(KERNEL)
 
 $(KERNEL): $(OBJ) $(SOBJ)
-	@echo "  LD  $(@:../../build/kernel/%=%)"
+	@echo "[LD]\t\t$(@:../../build/kernel/%=%)"
 	@$(LD) $(OBJ) $(SOBJ) ../../build/libc/libc.a $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
 
 ../../build/kernel/%.o: %.c
-	@echo "  CC  $<"
+	@echo "[CC]\t\t$<"
 	@$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o $@
 
 ../../build/kernel/%.s.o: %.s
-	@echo "  AS  $<"
+	@echo "[AS]\t\t$<"
 	@$(AS) -felf64 -g -F dwarf $< -o $@
 
 clean:

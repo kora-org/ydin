@@ -6,7 +6,7 @@ AR = llvm-ar
 
 CFLAGS ?= -O0 -g -pipe
 
-INTERNALCFLAGS  :=           \
+INTERNALCFLAGS  :=               \
 	-I../include             \
 	-I../include/fslibc      \
 	-nostdlib -std=gnu11     \
@@ -25,15 +25,15 @@ SOBJ   := $(patsubst %, ../../build/libc/%, $(SFILES:.s=.s.o))
 all: $(shell [ ! -d "../../build" ] || [ ! -d "../../build/libc" ]; mkdir -p ../../build/libc) $(LIBC)
 
 $(LIBC): $(OBJ) $(SOBJ)
-	@echo "  AR  $(@:../../build/libc/%=%)"
+	@echo "[AR]\t\t$(@:../../build/libc/%=%)"
 	@$(AR) rcs $@ $(OBJ) $(SOBJ)
 
 ../../build/libc/%.o: %.c
-	@echo "  CC  $<"
+	@echo "[CC]\t\t$<"
 	@$(CC) $(CFLAGS) $(INTERNALCFLAGS) -c $< -o $@
 
 ../../build/libc/%.s.o: %.s
-	@echo "  AS  $<"
+	@echo "[AS]\t\t$<"
 	@$(AS) -felf64 -g -F dwarf $< -o $@
 
 clean:

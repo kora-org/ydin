@@ -16,14 +16,14 @@ typedef struct __attribute__((packed)) {
 } gdt_entry_t;
 
 typedef struct __attribute__((packed)) {
-    struct gdt_entry_t null;
-    struct gdt_entry_t kernel_code;
-    struct gdt_entry_t kernel_data;
-    struct gdt_entry_t user_null;
-    struct gdt_entry_t user_code;
-    struct gdt_entry_t user_data;
-    struct gdt_entry_t reserved;
+    gdt_entry_t null;
+    gdt_entry_t kernel_code;
+    gdt_entry_t kernel_data;
+    gdt_entry_t user_null;
+    gdt_entry_t user_code;
+    gdt_entry_t user_data;
+    gdt_entry_t reserved;
 } gdt_t;
 
 void gdt_init(void);
-extern void gdt_flush(struct gdt_desc_t *gdt_desc);
+extern void gdt_flush(gdt_desc_t *gdt_desc);
