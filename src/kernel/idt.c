@@ -63,11 +63,13 @@ void* isr_table[32] = {
 };
 
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
-    idt[vector].isr_low    = (uint32_t)isr & 0xFFFF;
-    idt[vector].kernel_cs  = 0x28;
+    idt[vector].base_low   = (uint64_t)isr & 0xFFFF;
+    idt[vector].cs         = 0x28;
+    idt[vector].ist        = 0;
     idt[vector].attributes = flags;
-    idt[vector].isr_high   = (uint32_t)isr >> 16;
-    idt[vector].reserved   = 0;
+    idt[vector].base_mid   = ((uint64_t)isr >> 16) & 0xFFFF;
+    idt[vector].base_high  = ((uint64_t)isr >> 32) & 0xFFFFFFFF;
+    idt[vector].rsv0       = 0;
 }
 
 void idt_init() {
