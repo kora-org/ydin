@@ -2,9 +2,11 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stivale2.h>
-#include <kernel/kernel.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
+#include <kernel/pic.h>
+#include <kernel/panic.h>
+#include <kernel/kernel.h>
 
 static uint8_t stack[4096];
 FILE scr_term;
@@ -81,9 +83,11 @@ void _start(struct stivale2_struct *stivale2_struct) {
     scr_term.putc = _putc;
     stdin = stdout = &scr_term;
     printf("Welcome to FaruOS!\n");
+    printf("Compiled in %s with %s\n", __DATE__, __VERSION__);
     printf("\n");
     module_load(gdt_init, "GDT");
     module_load(idt_init, "IDT");
+    //module_load(pic_remap, "PIC");
     printf("Hello World!");
     panic("panic test");
 
