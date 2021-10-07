@@ -41,7 +41,6 @@ void* isr_table[32] = {
     isr_reserved,
     isr_reserved,
     isr_30,
-    isr_reserved,
     isr_reserved
 };
 

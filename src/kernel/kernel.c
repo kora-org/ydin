@@ -87,7 +87,7 @@ void _start(struct stivale2_struct *stivale2_struct) {
     printf("\n");
     module_load(gdt_init, "GDT");
     module_load(idt_init, "IDT");
-    //module_load(pic_remap, "PIC");
+    module_load(pic_remap, "PIC");
     printf("Hello World!");
     panic("panic test");
 
