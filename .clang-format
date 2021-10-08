@@ -1,0 +1,10 @@
+---
+BasedOnStyle: WebKit
+BreakBeforeBraces: Attach
+UseTab: Never
+TabWidth: 4
+IndentWidth: 4
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: false
+ColumnLimit: 90
+...
