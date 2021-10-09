@@ -23,37 +23,52 @@ SECTIONS
     /* bootloader will be able to relocate us as it sees fit. */
     . = 0xffffffff80200000;
 
+    _kernel_start = .;
+    _kernel_text_start = .;
     .text : {
         *(.text*)
     } :text
+    _kernel_text_end = .;
 
     /* Move to the next memory page for .rodata */
     . += 0x1000;
 
     /* We place the .stivale2hdr section containing the header in its own section, */
     /* and we use the KEEP directive on it to make sure it doesn't get discarded. */
+
+    _kernel_stivale2_start = .;
     .stivale2hdr : {
         KEEP(*(.stivale2hdr))
     } :rodata
+    _kernel_stivale2hdr_end = .;
 
+    _kernel_rodata_start = .;
     .rodata : {
         *(.rodata*)
     } :rodata
+    _kernel_rodata_end = .;
 
     /* Move to the next memory page for .data */
     . += 0x1000;
 
+    _kernel_data_start = .;
     .data : {
         *(.data*)
     } :data
+    _kernel_data_end = .;
 
+    _kernel_dynamic_end = .;
     /* Dynamic section needed for PIE */
     .dynamic : {
         *(.dynamic)
     } :data :dynamic
+    _kernel_dynamic_end = .;
 
+    _kernel_bss_start = .;
     .bss : {
         *(COMMON)
         *(.bss*)
     } :data
+    _kernel_bss_end = .;
+    _kernel_end = .;
 }

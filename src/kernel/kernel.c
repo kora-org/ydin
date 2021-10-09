@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include <stivale2.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/pic.h>
+#include <kernel/pmm.h>
 #include <kernel/panic.h>
 #include <kernel/kernel.h>
 
@@ -56,7 +58,7 @@ static int _putc(int c, FILE *stream) {
 
 void module_load(void (module)(), char* name) {
     printf("[kernel] Initializing %s...", name);
-    for (int i = 0; i < (int)term_cols - (strlen("[kernel] Initializing ") + strlen(name) + strlen("...")) - strlen("OK "); ++i) {
+    for (int i = 0; i < (int)term_cols - (strlen("[kernel] Initializing ") + strlen(name) + strlen("...")) - strlen("OK "); i++) {
         printf(" ");
     }
     (module)();
@@ -67,8 +69,15 @@ void halt(void) {
     asm("hlt");
 }
 
+void pmm_init_all(void) {
+    pmm_init((uint32_t) &_kernel_end, mem_size_);
+    pmm_init_available_regions(mmap_str_tag->memmap[0].base, mmap_str_tag->memmap[sizeof(mmap_str_tag->entries)].base);
+    pmm_deinit_kernel();
+}
+
 void _start(struct stivale2_struct *stivale2_struct) {
     struct stivale2_struct_tag_terminal *term_str_tag;
+    mmap_str_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);
     term_str_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID);
     if (term_str_tag == NULL) {
         for (;;) {
@@ -82,12 +91,19 @@ void _start(struct stivale2_struct *stivale2_struct) {
     term_rows = (uint16_t *)term_str_tag->rows;
     scr_term.putc = _putc;
     stdin = stdout = &scr_term;
+
+    for (size_t i = 0; i < mmap_str_tag->entries; ++i)
+        mem_size_ += mmap_str_tag->memmap[i].length;
+    mem_size_ += 1024;
+
     printf("Welcome to FaruOS!\n");
     printf("Compiled in %s with %s\n", __DATE__, __VERSION__);
     printf("\n");
+    printf("Memory size: %d\n", mem_size_);
     module_load(gdt_init, "GDT");
     module_load(idt_init, "IDT");
     module_load(pic_remap, "PIC");
+    module_load(pmm_init_all, "PMM");
     printf("Hello World!");
     panic("panic test");
 
