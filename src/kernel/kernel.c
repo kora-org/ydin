@@ -70,9 +70,11 @@ void halt(void) {
 }
 
 void pmm_init_all(void) {
+    extern uint8_t *_kernel_start;
+    extern uint8_t *_kernel_end;
     pmm_init((uint32_t) &_kernel_end, mem_size_);
-    pmm_init_available_regions(mmap_str_tag->memmap[0].base, mmap_str_tag->memmap[sizeof(mmap_str_tag->entries)].base);
-    pmm_deinit_kernel();
+    pmm_init_available_regions(&mmap_str_tag->memmap[0], &mmap_str_tag->memmap[mmap_str_tag->entries]);
+    //pmm_deinit_kernel();
 }
 
 void _start(struct stivale2_struct *stivale2_struct) {

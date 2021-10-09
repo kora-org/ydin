@@ -41,10 +41,7 @@ void pmm_deinit_region(uint32_t base, size_t size) {
     }
 }
 
-void pmm_init_available_regions(uint32_t mmap_, uint32_t mmap_end_) {
-    struct stivale2_mmap_entry *mmap = (struct stivale2_mmap_entry *) mmap_;
-    struct stivale2_mmap_entry *mmap_end = (struct stivale2_mmap_entry *) mmap_end_;
-
+void pmm_init_available_regions(struct stivale2_mmap_entry *mmap, struct stivale2_mmap_entry *mmap_end) {
     for (int i = 0; mmap < mmap_end; mmap++, i++)
         if (mmap->type == STIVALE2_MMAP_USABLE)
             pmm_init_region((uint32_t) mmap->base, (size_t) mmap->length);
