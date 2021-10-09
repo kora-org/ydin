@@ -8,7 +8,7 @@ CFLAGS ?= -O0 -g -pipe
 
 INTERNALCFLAGS  :=             \
 	-I../include           \
-	-I../include/fslibc    \
+	-I../include/fslc      \
 	-nostdlib -std=gnu11   \
 	-ffreestanding -fwrapv \
 	-fno-stack-protector   \
@@ -26,7 +26,7 @@ all: checkdir $(LIBC)
 
 checkdir:
 	@if [ ! -d "../../build" ] || [ ! -d "../../build/libc" ]; then \
-		mkdir -p ../../build/libc/; \
+		mkdir -p ../../build/libc; \
 	fi
 
 $(LIBC): $(OBJ) $(SOBJ)
