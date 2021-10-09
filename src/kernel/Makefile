@@ -13,6 +13,7 @@ INTERNALLDFLAGS :=               \
 	-zmax-page-size=0x1000   \
 	-static                  \
 	-pie --no-dynamic-linker \
+	-L../../build/libc -lc   \
 	-ztext -zmuldefs
 
 INTERNALCFLAGS  :=               \
@@ -24,18 +25,23 @@ INTERNALCFLAGS  :=               \
 	-mcmodel=kernel -MMD     \
 	-fpie -mno-red-zone
 
-CFILES := $(shell find ./ -type f -name '*.c')
-SFILES := $(shell find ./ -type f -name '*.s')
+CFILES := $(wildcard *.c */*.c)
+SFILES := $(wildcard *.s */*.s)
 OBJ    := $(patsubst %, ../../build/kernel/%, $(CFILES:.c=.o))
 SOBJ   := $(patsubst %, ../../build/kernel/%, $(SFILES:.s=.s.o))
 
 .PHONY: all clean
 
-all: $(shell [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ]; mkdir -p ../../build/kernel) $(KERNEL)
+all: checkdir $(KERNEL)
+
+checkdir:
+	@if [ ! -d "../../build" ] || [ ! -d "../../build/kernel" ]; then \
+		mkdir -p $(patsubst %, ../../build/kernel/%, $(sort $(dir $(wildcard */)))); \
+	fi
 
 $(KERNEL): $(OBJ) $(SOBJ)
 	@echo "[LD]\t\t$(@:../../build/kernel/%=%)"
-	@$(LD) $(OBJ) $(SOBJ) ../../build/libc/libc.a $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
+	@$(LD) $(OBJ) $(SOBJ) $(LDFLAGS) $(INTERNALLDFLAGS) -o $@
 
 ../../build/kernel/%.o: %.c
 	@echo "[CC]\t\t$<"

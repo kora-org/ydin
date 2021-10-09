@@ -6,23 +6,28 @@ AR = llvm-ar
 
 CFLAGS ?= -O0 -g -pipe
 
-INTERNALCFLAGS  :=               \
-	-I../include             \
-	-I../include/fslibc      \
-	-nostdlib -std=gnu11     \
-	-ffreestanding -fwrapv   \
-	-fno-stack-protector     \
-	-mcmodel=kernel -MMD     \
+INTERNALCFLAGS  :=             \
+	-I../include           \
+	-I../include/fslibc    \
+	-nostdlib -std=gnu11   \
+	-ffreestanding -fwrapv \
+	-fno-stack-protector   \
+	-mcmodel=kernel -MMD   \
 	-fpie -mno-red-zone
 
-CFILES := $(shell find ./ -type f -name '*.c')
-SFILES := $(shell find ./ -type f -name '*.s')
+CFILES := $(wildcard *.c */*.c)
+SFILES := $(wildcard *.s */*.s)
 OBJ    := $(patsubst %, ../../build/libc/%, $(CFILES:.c=.o))
 SOBJ   := $(patsubst %, ../../build/libc/%, $(SFILES:.s=.s.o))
 
 .PHONY: all clean
 
-all: $(shell [ ! -d "../../build" ] || [ ! -d "../../build/libc" ]; mkdir -p ../../build/libc) $(LIBC)
+all: checkdir $(LIBC)
+
+checkdir:
+	@if [ ! -d "../../build" ] || [ ! -d "../../build/libc" ]; then \
+		mkdir -p ../../build/libc/; \
+	fi
 
 $(LIBC): $(OBJ) $(SOBJ)
 	@echo "[AR]\t\t$(@:../../build/libc/%=%)"

@@ -34,4 +34,5 @@ $(ISO_IMAGE): limine kernel
 
 clean:
 	@rm -f $(ISO_IMAGE)
+	@$(MAKE) --no-print-directory -C src/libc clean
 	@$(MAKE) --no-print-directory -C src/kernel clean
