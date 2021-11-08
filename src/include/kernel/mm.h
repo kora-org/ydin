@@ -5,9 +5,9 @@
 
 #define PAGE_SIZE 4096
 #define TABLES_PER_DIRECTORY 512
-#define PAGES_PER_TABLE	512
+#define PAGES_PER_TABLE 512
 
-#define KB_TO_PAGES(kb)	(((kb) * 1024) / PAGE_SIZE)
+#define KB_TO_PAGES(kb) (((kb) * 1024) / PAGE_SIZE)
 #define ALIGN_DOWN(addr, align) ((addr) & ~((align)-1))
 #define ALIGN_UP(addr, align) (((addr) + (align)-1) & ~((align)-1))
 

@@ -1,12 +1,8 @@
-/* Tell the linker that we want an x86_64 ELF64 output file */
 OUTPUT_FORMAT(elf64-x86-64)
 OUTPUT_ARCH(i386:x86-64)
 
-/* We want the symbol _start to be our entry point */
 ENTRY(_start)
 
-/* Define the program headers we want so the bootloader gives us the right */
-/* MMU permissions */
 PHDRS
 {
     null    PT_NULL    FLAGS(0) ;                   /* Null segment */
@@ -18,57 +14,34 @@ PHDRS
 
 SECTIONS
 {
-    /* We wanna be placed in the higher half, 2MiB above 0 in physical memory. */
-    /* Since we are going to use PIE, this is just the base load address, but the */
-    /* bootloader will be able to relocate us as it sees fit. */
     . = 0xffffffff80200000;
 
-    _kernel_start = .;
-    _kernel_text_start = .;
     .text : {
         *(.text*)
     } :text
-    _kernel_text_end = .;
 
-    /* Move to the next memory page for .rodata */
     . += 0x1000;
 
-    /* We place the .stivale2hdr section containing the header in its own section, */
-    /* and we use the KEEP directive on it to make sure it doesn't get discarded. */
-
-    _kernel_stivale2_start = .;
     .stivale2hdr : {
         KEEP(*(.stivale2hdr))
     } :rodata
-    _kernel_stivale2hdr_end = .;
 
-    _kernel_rodata_start = .;
     .rodata : {
         *(.rodata*)
     } :rodata
-    _kernel_rodata_end = .;
 
-    /* Move to the next memory page for .data */
     . += 0x1000;
 
-    _kernel_data_start = .;
     .data : {
         *(.data*)
     } :data
-    _kernel_data_end = .;
 
-    _kernel_dynamic_end = .;
-    /* Dynamic section needed for PIE */
     .dynamic : {
         *(.dynamic)
     } :data :dynamic
-    _kernel_dynamic_end = .;
 
-    _kernel_bss_start = .;
     .bss : {
         *(COMMON)
         *(.bss*)
     } :data
-    _kernel_bss_end = .;
-    _kernel_end = .;
 }

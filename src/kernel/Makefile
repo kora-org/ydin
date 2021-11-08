@@ -7,28 +7,28 @@ LD = ld.lld
 CFLAGS ?= -O0 -gdwarf -pipe
 LDFLAGS ?=
 
-INTERNALLDFLAGS :=               \
-	-Tlinker.ld              \
-	-nostdlib                \
-	-zmax-page-size=0x1000   \
-	-static                  \
+INTERNALLDFLAGS := \
+	-Tlinker.ld \
+	-nostdlib \
+	-zmax-page-size=0x1000 \
+	-static \
 	-pie --no-dynamic-linker \
-	-L../../build/libc -lc   \
+	-L../../build/libc -lc \
 	-ztext -zmuldefs
 
-INTERNALCFLAGS  :=               \
-	-I../include             \
+INTERNALCFLAGS := \
+	-I../include \
 	-I../../external/stivale \
-	-nostdlib -std=gnu11     \
-	-ffreestanding -fwrapv   \
-	-fno-stack-protector     \
-	-mcmodel=kernel -MMD     \
+	-nostdlib -std=gnu11 \
+	-ffreestanding -fwrapv \
+	-fno-stack-protector \
+	-mcmodel=kernel -MMD \
 	-fpie -mno-red-zone
 
 CFILES := $(wildcard *.c */*.c)
 SFILES := $(wildcard *.s */*.s)
-OBJ    := $(patsubst %, ../../build/kernel/%, $(CFILES:.c=.o))
-SOBJ   := $(patsubst %, ../../build/kernel/%, $(SFILES:.s=.s.o))
+OBJ := $(patsubst %, ../../build/kernel/%, $(CFILES:.c=.o))
+SOBJ := $(patsubst %, ../../build/kernel/%, $(SFILES:.s=.s.o))
 
 .PHONY: all clean
 
