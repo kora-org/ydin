@@ -1,6 +1,11 @@
 #pragma once
 #include <stdint.h>
 
+#define EXCEPTION(n) \
+    void isr_##n(void) { \
+        isr_handler(n); \
+    }
+
 void isr_handler(uint64_t irq);
 void isr_0(void);
 void isr_1(void);

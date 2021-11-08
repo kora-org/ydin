@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stivale2.h>
+#include <kernel/mm.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/pic.h>
@@ -10,7 +11,7 @@
 #include <kernel/panic.h>
 #include <kernel/kernel.h>
 
-static uint8_t stack[4096];
+static uint8_t stack[PAGE_SIZE];
 FILE scr_term;
 
 static struct stivale2_header_tag_terminal terminal_hdr_tag = {
@@ -52,16 +53,14 @@ void *stivale2_get_tag(struct stivale2_struct *stivale2_struct, uint64_t id) {
     }
 }
 
-static int _putc(int c, FILE *stream) {
-    term_write(&c, 1);
-}
+static int _putc(int c, FILE *stream) { term_write(&c, 1); }
 
-void module_load(void (module)(), char* name) {
+void module_load(void *module, char *name) {
     printf("[kernel] Initializing %s...", name);
     for (int i = 0; i < (int)term_cols - (strlen("[kernel] Initializing ") + strlen(name) + strlen("...")) - strlen("OK "); i++) {
         printf(" ");
     }
-    (module)();
+    ((void (*)())module)();
     printf("\033[32mOK\033[0m\n");
 }
 
@@ -69,17 +68,9 @@ void halt(void) {
     asm("hlt");
 }
 
-void pmm_init_all(void) {
-    extern uint8_t *_kernel_start;
-    extern uint8_t *_kernel_end;
-    pmm_init((uint32_t) &_kernel_end, mem_size_);
-    pmm_init_available_regions(&mmap_str_tag->memmap[0], &mmap_str_tag->memmap[mmap_str_tag->entries]);
-    //pmm_deinit_kernel();
-}
-
 void _start(struct stivale2_struct *stivale2_struct) {
+    boot_struct = stivale2_struct;
     struct stivale2_struct_tag_terminal *term_str_tag;
-    mmap_str_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);
     term_str_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID);
     if (term_str_tag == NULL) {
         for (;;) {
@@ -94,18 +85,13 @@ void _start(struct stivale2_struct *stivale2_struct) {
     scr_term.putc = _putc;
     stdin = stdout = &scr_term;
 
-    for (size_t i = 0; i < mmap_str_tag->entries; ++i)
-        mem_size_ += mmap_str_tag->memmap[i].length;
-    mem_size_ += 1024;
-
     printf("Welcome to FaruOS!\n");
     printf("Compiled in %s with %s\n", __DATE__, __VERSION__);
     printf("\n");
-    printf("Memory size: %d\n", mem_size_);
-    module_load(gdt_init, "GDT");
-    module_load(idt_init, "IDT");
-    module_load(pic_remap, "PIC");
-    module_load(pmm_init_all, "PMM");
+    module_load(&gdt_init, "GDT");
+    module_load(&idt_init, "IDT");
+    module_load(&pic_remap, "PIC");
+    pmm_init(stivale2_struct);
     printf("Hello World!");
     panic("panic test");
 
