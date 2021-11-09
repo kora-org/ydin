@@ -12,7 +12,6 @@ INTERNALLDFLAGS := \
 	-nostdlib \
 	-zmax-page-size=0x1000 \
 	-static \
-	-pie --no-dynamic-linker \
 	-L../../build/libc -lc \
 	-ztext -zmuldefs
 
@@ -20,10 +19,10 @@ INTERNALCFLAGS := \
 	-I../include \
 	-I../../external/stivale \
 	-nostdlib -std=gnu11 \
-	-ffreestanding -fwrapv \
+	-ffreestanding -fno-pic \
 	-fno-stack-protector \
 	-mcmodel=kernel -MMD \
-	-fpie -mno-red-zone
+	-mno-red-zone
 
 CFILES := $(wildcard *.c */*.c)
 SFILES := $(wildcard *.s */*.s)

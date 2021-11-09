@@ -6,19 +6,19 @@ AR = llvm-ar
 
 CFLAGS ?= -O0 -g -pipe
 
-INTERNALCFLAGS  :=             \
-	-I../include           \
-	-I../include/fslc      \
-	-nostdlib -std=gnu11   \
-	-ffreestanding -fwrapv \
-	-fno-stack-protector   \
-	-mcmodel=kernel -MMD   \
-	-fpie -mno-red-zone
+INTERNALCFLAGS := \
+	-I../include  \
+	-I../include/fslc \
+	-nostdlib -std=gnu11 \
+	-ffreestanding -fno-pic \
+	-fno-stack-protector \
+	-mcmodel=kernel -MMD \
+	-mno-red-zone
 
 CFILES := $(wildcard *.c */*.c)
 SFILES := $(wildcard *.s */*.s)
-OBJ    := $(patsubst %, ../../build/libc/%, $(CFILES:.c=.o))
-SOBJ   := $(patsubst %, ../../build/libc/%, $(SFILES:.s=.s.o))
+OBJ := $(patsubst %, ../../build/libc/%, $(CFILES:.c=.o))
+SOBJ := $(patsubst %, ../../build/libc/%, $(SFILES:.s=.s.o))
 
 .PHONY: all clean
 
