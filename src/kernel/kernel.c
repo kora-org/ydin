@@ -8,6 +8,7 @@
 #include <kernel/idt.h>
 #include <kernel/pic.h>
 #include <kernel/pmm.h>
+#include <kernel/vmm.h>
 #include <kernel/panic.h>
 #include <kernel/kernel.h>
 
@@ -83,6 +84,7 @@ void halt(void) {
 
 void _start(struct stivale2_struct *stivale2_struct) {
     boot_struct = stivale2_struct;
+
     struct stivale2_struct_tag_terminal *term_str_tag;
     term_str_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID);
     if (term_str_tag == NULL) {
@@ -102,6 +104,7 @@ void _start(struct stivale2_struct *stivale2_struct) {
     printf("Compiled in %s with %s\n", __DATE__, __VERSION__);
     printf("\n");
     pmm_init(stivale2_struct);
+    vmm_init(stivale2_struct);
     module_load(&gdt_init, "GDT");
     module_load(&idt_init, "IDT");
     module_load(&pic_remap, "PIC");

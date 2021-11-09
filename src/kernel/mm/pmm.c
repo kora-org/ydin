@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <kernel/pmm.h>
 #include <kernel/kernel.h>
