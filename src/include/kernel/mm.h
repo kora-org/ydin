@@ -4,8 +4,6 @@
 #define HIGHER_HALF_KERNEL_CODE	0xFFFFFFFF80000000UL
 
 #define PAGE_SIZE 8192
-#define TABLES_PER_DIRECTORY 512
-#define PAGES_PER_TABLE 512
 
 #define KB_TO_PAGES(kb) (((kb) * 1024) / PAGE_SIZE)
 #define ALIGN_DOWN(addr, align) ((addr) & ~((align)-1))

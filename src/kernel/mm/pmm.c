@@ -8,8 +8,7 @@ struct pmm pmm_info;
 bitmap_t *bitmap;
 size_t highest_page;
 
-void pmm_init(struct stivale2_struct *stivale2_struct)
-{
+void pmm_init(struct stivale2_struct *stivale2_struct) {
     struct stivale2_struct_tag_memmap *memory_map = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);
     pmm_info.memory_map = memory_map;
     struct stivale2_mmap_entry *current_entry;
@@ -55,6 +54,8 @@ void pmm_init(struct stivale2_struct *stivale2_struct)
         if (current_entry->length >= bitmap->size) {
             bitmap->map = (uint8_t *)(TO_VIRTUAL_ADDRESS(current_entry->base));
 
+            memset((void *)bitmap->map, 0xFF, bitmap->size);
+
             current_entry->base += bitmap->size;
             current_entry->length -= bitmap->size;
 
@@ -66,8 +67,6 @@ void pmm_init(struct stivale2_struct *stivale2_struct)
     for (int i = 0; i < (int)term_cols - (strlen("[kernel] Initializing PMM...") - strlen("OK ")); i++) {
         printf(" ");
     }
-
-    memset((void *)bitmap->map, 0xFF, bitmap->size);
 
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
