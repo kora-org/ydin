@@ -49,7 +49,7 @@ void *memmove(void *dest, const void *src, size_t size) {
     return dest;
 }
 
-void *memset(void *buffer, int value, size_t size) {
+void *memset(void *buffer, uint8_t value, size_t size) {
 #ifdef __x86_64__
     // use optimized memset in x86-64
     asm volatile(

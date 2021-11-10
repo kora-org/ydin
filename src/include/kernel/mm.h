@@ -1,9 +1,12 @@
 #pragma once
 
-#define HIGHER_HALF_KERNEL_DATA	0xFFFF800000000000UL
-#define HIGHER_HALF_KERNEL_CODE	0xFFFFFFFF80000000UL
+#define HIGHER_HALF_KERNEL_DATA 0xFFFF800000000000UL
+#define HIGHER_HALF_KERNEL_CODE 0xFFFFFFFF80000000UL
 
 #define PAGE_SIZE 8192
+
+#define BIT_TO_PAGE(bit) ((size_t)bit * 0x1000)
+#define PAGE_TO_BIT(page) ((size_t)page / 0x1000)
 
 #define KB_TO_PAGES(kb) (((kb) * 1024) / PAGE_SIZE)
 #define ALIGN_DOWN(addr, align) ((addr) & ~((align)-1))

@@ -106,6 +106,7 @@ void _start(struct stivale2_struct *stivale2_struct) {
     term_rows = term_str_tag->rows;
 
     printf("Welcome to FaruOS!\n");
+    printf("%p\n", ((struct stivale2_struct_vmap *)stivale2_get_tag(stivale2_struct, 0xb0ed257db18cb58f))->addr);
     printf("Compiled in %s with %s\n", __DATE__, __VERSION__);
     printf("\n");
     module_load(&gdt_init, "GDT");
