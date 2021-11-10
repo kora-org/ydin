@@ -23,9 +23,9 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
     }
 
     log("Initializing VMM...");
-    /*for (int i = 0; i < term_cols - (strlen("[kernel] Initializing VMM") + strlen("...")) - strlen("OK "); i++) {
+    for (int i = 0; i < term_cols - (strlen("[kernel] Initializing VMM") + strlen("...")) - strlen("OK "); i++) {
         printf(" ");
-    }*/
+    }
 
     // 1/4: map first 4 GiB of memory
     for (uint64_t i = 0; i < 4 * GB; i += PAGE_SIZE)
@@ -50,8 +50,7 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
     }
 
     vmm_activate_page_directory(root_page_directory);
-    //printf("\033[32mOK\033[0m\n");
-    printf("ok\n");
+    printf("\033[32mOK\033[0m\n");
 }
 
 uint64_t *vmm_create_page_directory(void) {
