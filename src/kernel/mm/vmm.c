@@ -19,11 +19,11 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
 
     if (check_la57()) {
         is_la57_enabled = 1;
-        printf("[kernel] 5-level paging supported!\n");
+        log("5-level paging supported!\n");
     }
 
-    printf("[kernel] Initializing VMM...");
-    for (int i = 0; i < (int)term_cols - (strlen("[kernel] Initializing VMM...") - strlen("OK ")); i++) {
+    log("Initializing VMM...");
+    for (int i = 0; i < term_cols - (strlen("[kernel] Initializing VMM") + strlen("...")) - strlen("OK "); i++) {
         printf(" ");
     }
 

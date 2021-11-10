@@ -1,6 +1,16 @@
-#ifndef _STD_STDIO_H
-#define _STD_STDIO_H
+#pragma once
+#include <stdint.h>
+#include <stddef.h>
+#include <stdarg.h>
 
-#include "fslc/fslc_stdio.h"
-
-#endif /* _STD_STDIO_H */
+int putc(const char c);
+int putchar(char c);
+int puts(const char* str);
+int printf(const char* format, ...) ;
+int sprintf(char* buffer, const char* format, ...);
+int vsprintf(char* buffer, const char* format, va_list va);
+int snprintf(char* buffer, size_t count, const char* format, ...) ;
+int vsnprintf(char* buffer, size_t count, const char* format, va_list va);
+int vprintf(const char* format, va_list va);
+int fctprintf(void (*out)(char character, void* arg), void* arg, const char* format, ...);
+int vfctprintf(void (*out)(char character, void* arg), void* arg, const char* format, va_list va);

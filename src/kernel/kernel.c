@@ -13,7 +13,8 @@
 #include <kernel/kernel.h>
 
 static uint8_t stack[PAGE_SIZE];
-FILE scr_term;
+int term_cols;
+int term_rows;
 
 static struct stivale2_tag la57_hdr_tag = {
     .identifier = STIVALE2_HEADER_TAG_5LV_PAGING_ID,
@@ -67,11 +68,17 @@ void *stivale2_get_tag(struct stivale2_struct *stivale2_struct, uint64_t id) {
     }
 }
 
-static int _putc(int c, FILE *stream) { term_write(&c, 1); }
+void log(const char *str, ...) {
+    va_list args;
+    va_start(args, str);
+    printf("[kernel] ");
+    vprintf(str, args);
+    va_end(args);
+}
 
 void module_load(void *module, char *name) {
-    printf("[kernel] Initializing %s...", name);
-    for (int i = 0; i < (int)term_cols - (strlen("[kernel] Initializing ") + strlen(name) + strlen("...")) - strlen("OK "); i++) {
+    log("Initializing %s...", name);
+    for (int i = 0; i < term_cols - (strlen("[kernel] Initializing ") + strlen(name) + strlen("...")) - strlen("OK "); i++) {
         printf(" ");
     }
     ((void (*)())module)();
@@ -95,17 +102,15 @@ void _start(struct stivale2_struct *stivale2_struct) {
 
     void *term_write_ptr = (void *)term_str_tag->term_write;
     term_write = term_write_ptr;
-    term_cols = (uint16_t *)term_str_tag->cols;
-    term_rows = (uint16_t *)term_str_tag->rows;
-    scr_term.putc = _putc;
-    stdin = stdout = &scr_term;
+    term_cols = term_str_tag->cols;
+    term_rows = term_str_tag->rows;
 
     printf("Welcome to FaruOS!\n");
     printf("Compiled in %s with %s\n", __DATE__, __VERSION__);
     printf("\n");
+    module_load(&gdt_init, "GDT");
     pmm_init(stivale2_struct);
     vmm_init(stivale2_struct);
-    module_load(&gdt_init, "GDT");
     module_load(&idt_init, "IDT");
     module_load(&pic_remap, "PIC");
     printf("Hello World!");

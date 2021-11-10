@@ -12,10 +12,10 @@ run: $(ISO)
 limine:
 	@$(MAKE) --no-print-directory -C external/limine
 
-libc:
-	@$(MAKE) --no-print-directory -C src/libc
+koete:
+	@$(MAKE) --no-print-directory -C src/koete
 
-kernel: libc
+kernel: koete
 	@$(MAKE) --no-print-directory -C src/kernel
 
 $(ISO): limine kernel
@@ -35,5 +35,5 @@ $(ISO): limine kernel
 
 clean:
 	@rm -f $(ISO)
-	@$(MAKE) --no-print-directory -C src/libc clean
+	@$(MAKE) --no-print-directory -C src/koete clean
 	@$(MAKE) --no-print-directory -C src/kernel clean

@@ -13,13 +13,14 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     pmm_info.memory_map = memory_map;
     struct stivale2_mmap_entry *current_entry;
 
-    printf("[kernel] Memory map layout:\n");
+    log("Memory map layout:\n");
 
     size_t top = 0;
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
 
-        printf("[kernel]\tMemory map entry No. %.16d: \n[kernel]\t\tBase: 0x%.16llx\n[kernel]\t\tLength: 0x%.16llx\n[kernel]\t\tType: %s\n", i, current_entry->base, current_entry->length, get_mmap_entry_type(current_entry->type));
+        log("- Memory map entry No. %d:\n", i);
+        log("  Base: 0x%.16llx, Length: 0x%.16llx, Type: %s\n", current_entry->base, current_entry->length, get_mmap_entry_type(current_entry->type));
 
         if (current_entry->type != STIVALE2_MMAP_USABLE &&
             current_entry->type != STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE &&
@@ -40,10 +41,15 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
 
     bitmap->size = bitmap_byte_size;
 
-    printf("[kernel] Memory specifications:\n");
+    log("Memory specifications:\n");
     current_entry = &pmm_info.memory_map->memmap[0];
-    printf("[kernel]\tTotal amount of memory: %d kB\n", current_entry->base + current_entry->length - 1);
-    printf("[kernel]\tSize of bitmap: %d kB\n", bitmap->size / 1024);
+    log("- Total amount of memory: %d MB\n", (current_entry->base + current_entry->length - 1) / 1024);
+    log("- Size of bitmap: %d kB\n", bitmap->size / 1024);
+
+    log("Initializing PMM...");
+    for (int i = 0; i < term_cols - (strlen("[kernel] Initializing PMM") + strlen("...")) - strlen("OK "); i++) {
+        printf(" ");
+    }
 
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
@@ -54,18 +60,13 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
         if (current_entry->length >= bitmap->size) {
             bitmap->map = (uint8_t *)(TO_VIRTUAL_ADDRESS(current_entry->base));
 
-            memset((void *)bitmap->map, 0xFF, bitmap->size);
+            //memset((void *)bitmap->map, 0xFF, bitmap->size);
 
             current_entry->base += bitmap->size;
             current_entry->length -= bitmap->size;
 
             break;
         }
-    }
-
-    printf("[kernel] Initializing PMM...");
-    for (int i = 0; i < (int)term_cols - (strlen("[kernel] Initializing PMM...") - strlen("OK ")); i++) {
-        printf(" ");
     }
 
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
