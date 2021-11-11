@@ -12,7 +12,7 @@
 #include <kernel/panic.h>
 #include <kernel/kernel.h>
 
-static uint8_t stack[PAGE_SIZE];
+uint8_t stack[PAGE_SIZE];
 struct stivale2_struct *boot_struct;
 struct stivale2_struct_tag_kernel_base_address *kernel_base;
 int term_cols;

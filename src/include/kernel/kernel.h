@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include <stivale2.h>
 
+#define PAGE_SIZE 8192
+extern uint8_t stack[PAGE_SIZE];
+
 extern int term_cols;
 extern int term_rows;
 void (*term_write)(const char *string, size_t length);

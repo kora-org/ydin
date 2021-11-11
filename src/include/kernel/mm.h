@@ -1,8 +1,6 @@
 #pragma once
 #include <kernel/kernel.h>
 
-#define PAGE_SIZE 8192
-
 #define BIT_TO_PAGE(bit) ((size_t)bit * 0x1000)
 #define PAGE_TO_BIT(page) ((size_t)page / 0x1000)
 

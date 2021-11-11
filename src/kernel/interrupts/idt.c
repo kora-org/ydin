@@ -47,7 +47,7 @@ void* isr_table[32] = {
 
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
     idt[vector].base_low   = (uint64_t)isr & 0xFFFF;
-    idt[vector].cs         = 0x28;
+    idt[vector].cs         = 0x08;
     idt[vector].ist        = 0;
     idt[vector].attributes = flags;
     idt[vector].base_mid   = ((uint64_t)isr >> 16) & 0xFFFF;
