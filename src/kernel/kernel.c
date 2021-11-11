@@ -13,6 +13,8 @@
 #include <kernel/kernel.h>
 
 static uint8_t stack[PAGE_SIZE];
+struct stivale2_struct *boot_struct;
+struct stivale2_struct_tag_kernel_base_address *kernel_base;
 int term_cols;
 int term_rows;
 
@@ -94,6 +96,7 @@ void _start(struct stivale2_struct *stivale2_struct) {
 
     struct stivale2_struct_tag_terminal *term_str_tag;
     term_str_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID);
+    kernel_base = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_KERNEL_BASE_ADDRESS_ID);
     if (term_str_tag == NULL) {
         for (;;) {
             asm ("hlt");

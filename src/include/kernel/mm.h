@@ -1,7 +1,5 @@
 #pragma once
-
-#define PHYSICAL_MEMORY_OFFSET ((uintptr_t)0xFFFF800000000000)
-#define KERNEL_BASE ((uintptr_t)0xFFFFFFFF80000000)
+#include <kernel/kernel.h>
 
 #define PAGE_SIZE 8192
 
@@ -12,7 +10,7 @@
 #define ALIGN_DOWN(addr, align) ((addr) & ~((align)-1))
 #define ALIGN_UP(addr, align) (((addr) + (align)-1) & ~((align)-1))
 
-#define TO_VIRTUAL_ADDRESS(physical_address) (PHYSICAL_MEMORY_OFFSET + physical_address)
-#define TO_PHYSICAL_ADDRESS(physical_address) (KERNEL_BASE + physical_address)
-#define FROM_VIRTUAL_ADDRESS(virtual_address) (virtual_address - PHYSICAL_MEMORY_OFFSET)
-#define FROM_PHYSICAL_ADDRESS(physical_address) (physical_address - KERNEL_BASE)
+#define TO_VIRTUAL_ADDRESS(physical_address) (VIRTUAL_ADDRESS + (physical_address - PHYSICAL_ADDRESS))
+#define TO_PHYSICAL_ADDRESS(virtual_address) (PHYSICAL_ADDRESS + (virtual_address - VIRTUAL_ADDRESS))
+#define FROM_VIRTUAL_ADDRESS(virtual_address) (virtual_address - VIRTUAL_ADDRESS)
+#define FROM_PHYSICAL_ADDRESS(physical_address) (physical_address - PHYSICAL_ADDRESS)

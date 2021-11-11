@@ -37,7 +37,7 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
 
     // 3/4: map protected memory ranges
     for (uint64_t i = 0; i < 0x80000000; i += PAGE_SIZE)
-        vmm_map_page(root_page_directory, i, FROM_PHYSICAL_ADDRESS(i), PTE_PRESENT | PTE_READ_WRITE);
+        vmm_map_page(root_page_directory, i, TO_PHYSICAL_ADDRESS(i), PTE_PRESENT | PTE_READ_WRITE);
 
     // 4/4: map stivale2 structs
     for (uint64_t i = 0; i < memory_map->entries; i++) {
