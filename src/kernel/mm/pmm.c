@@ -43,7 +43,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
 
     log("Memory specifications:\n");
     current_entry = &pmm_info.memory_map->memmap[0];
-    log("- Total amount of memory: %d MB\n", (current_entry->base + current_entry->length - 1) / 1024);
+    log("- Total amount of memory: %d MB\n", ((current_entry->base + current_entry->length - 1) / 1024));
     log("- Size of bitmap: %d kB\n", bitmap->size / 1024);
 
     log("Initializing PMM...");
