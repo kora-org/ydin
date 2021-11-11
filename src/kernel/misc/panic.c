@@ -15,7 +15,7 @@ void __panic(char *file, const char function[20], int line, int is_isr, exceptio
     } else {
         log("\nYo dawg, I heard you like kernel panic. So I put a kernel panic in\n");
         log("your kernel panic so you can panic while you panic!\n");
-        printf("[kernel]");
+        log("");
     }
     uint8_t* rip = __builtin_return_address(0);
     uint64_t* rbp = __builtin_frame_address(0);
