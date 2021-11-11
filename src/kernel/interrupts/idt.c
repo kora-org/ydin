@@ -10,7 +10,7 @@ static idt_entry_t idt[256];
 static idtr_t idtr;
 static bool vectors[256];
 
-void* isr_table[32] = {
+void* isr_table[48] = {
     isr_0,
     isr_1,
     isr_2,
@@ -42,7 +42,24 @@ void* isr_table[32] = {
     isr_reserved,
     isr_reserved,
     isr_30,
-    pic_remap
+    pic_remap,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi,
+    pic_eoi
 };
 
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
@@ -59,7 +76,7 @@ void idt_init() {
     idtr.base = (uintptr_t)&idt[0];
     idtr.limit = (uint16_t)sizeof(idt_entry_t) * 256 - 1;
  
-    for (uint8_t vector = 0; vector < 32; vector++) {
+    for (uint8_t vector = 0; vector < 48; vector++) {
         idt_set_descriptor(vector, isr_table[vector], 0x8E);
         vectors[vector] = true;
     }
