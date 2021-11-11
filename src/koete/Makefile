@@ -26,7 +26,7 @@ all: checkdir $(LIBKOETE)
 
 checkdir:
 	@if [ ! -d "../../build" ] || [ ! -d "../../build/koete" ]; then \
-		mkdir -p $(patsubst %, ../../build/koete/%, $(sort $(dir $(wildcard */)))); \
+		mkdir -p $(patsubst %, ../../build/koete/%, $(sort $(dir $(wildcard */*)))); \
 	fi
 
 $(LIBKOETE): $(OBJ) $(SOBJ)

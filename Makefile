@@ -7,7 +7,7 @@ all: $(ISO)
 
 run: $(ISO)
 	@echo "[QEMU]\t\t$(<:build/%=%)"
-	@qemu-system-x86_64 -M q35 -m 2G -no-reboot -no-shutdown $(QEMUFLAGS) -cdrom $(ISO)
+	@qemu-system-x86_64 -M q35 -m 4G -no-reboot -no-shutdown $(QEMUFLAGS) -cdrom $(ISO)
 
 limine:
 	@$(MAKE) --no-print-directory -C external/limine
