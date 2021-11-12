@@ -13,8 +13,12 @@
 #include <kernel/kernel.h>
 
 uint8_t stack[PAGE_SIZE];
-struct stivale2_struct *boot_struct;
+
+struct stivale2_struct *stivale2;
+struct stivale2_struct_tag_framebuffer *fb_tag;
+struct stivale2_struct_tag_smp *smp_tag;
 struct stivale2_struct_tag_kernel_base_address *kernel_base;
+
 int term_cols;
 int term_rows;
 
@@ -92,21 +96,24 @@ void halt(void) {
 }
 
 void _start(struct stivale2_struct *stivale2_struct) {
-    boot_struct = stivale2_struct;
+    stivale2 = stivale2_struct;
 
-    struct stivale2_struct_tag_terminal *term_str_tag;
-    term_str_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID);
+    struct stivale2_struct_tag_terminal *terminal_tag;
+    terminal_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_TERMINAL_ID);
+    fb_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID);
+    smp_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_SMP_ID);
     kernel_base = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_KERNEL_BASE_ADDRESS_ID);
-    if (term_str_tag == NULL) {
+
+    if (terminal_tag == NULL) {
         for (;;) {
             asm ("hlt");
         }
     }
 
-    void *term_write_ptr = (void *)term_str_tag->term_write;
+    void *term_write_ptr = (void *)terminal_tag->term_write;
     term_write = term_write_ptr;
-    term_cols = term_str_tag->cols;
-    term_rows = term_str_tag->rows;
+    term_cols = terminal_tag->cols;
+    term_rows = terminal_tag->rows;
 
     printf("Welcome to FaruOS!\n");
     printf("Compiled in %s with %s\n", __DATE__, __VERSION__);
