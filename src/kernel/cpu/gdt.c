@@ -4,34 +4,28 @@
 #include <kernel/kernel.h>
 
 gdt_t gdt = {
-    .entries = {
-        {0, 0, 0, 0, 0, 0}, // null
-        {0xffff, 0, 0, 0x9a, 0xcf, 0}, // kernel code
-        {0xffff, 0, 0, 0x92, 0xcf, 0}, // kernel data
-        {0xffff, 0, 0, 0xfa, 0xcf, 0}, // user data
-        {0xffff, 0, 0, 0xf2, 0xcf, 0}  // user code
-    }
+    {0, 0, 0, 0, 0, 0}, // null
+    {0xffff, 0, 0, 0x9a, 0xcf, 0}, // kernel code
+    {0xffff, 0, 0, 0x92, 0xcf, 0}, // kernel data
+    {0xffff, 0, 0, 0xfa, 0xcf, 0}, // user data
+    {0xffff, 0, 0, 0xf2, 0xcf, 0}, // user code
+    {0x68, 0, 0, 0x89, 0x20, 0, 0, 0} // tss
 };
 
 gdt_pointer_t gdt_pointer;
 tss_t tss;
 
-tss_entry_t create_tss_entry(uintptr_t tss);
-tss_entry_t create_tss_entry(uintptr_t tss) {
-    return (tss_entry_t){
-        .length = sizeof(tss_entry_t),
-        .base_low16 = tss & 0xffff,
-        .base_mid8 = (tss >> 16) & 0xff,
-        .flags1 = 0x89,
-        .flags2 = 0,
-        .base_high8 = (tss >> 24) & 0xff,
-        .base_upper32 = tss >> 32,
-        .reserved = 0,
-    };
+void gdt_init(void) {
+    tss_init();
+
+    gdt_pointer.size = sizeof(gdt_t) - 1;
+    gdt_pointer.offset = (uint64_t)&gdt;
+
+    gdt_flush(&gdt_pointer);
+    tss_flush();
 }
 
-void gdt_init(void) {
-    gdt.tss = create_tss_entry((uintptr_t)&tss);
+void tss_init(void) {
     memset(&tss, 0, sizeof(tss));
 
     tss.rsp[0] = (uintptr_t)stack;
@@ -39,9 +33,12 @@ void gdt_init(void) {
 
     tss.iopb_offset = sizeof(tss);
 
-    gdt_pointer.size = sizeof(gdt_t) - 1;
-    gdt_pointer.offset = (uint64_t)&gdt;
+    gdt.tss.base_low16 = (uintptr_t)&tss & 0xFFFF;
+    gdt.tss.base_mid8 = ((uintptr_t)&tss >> 16) & 0xFF;
+    gdt.tss.base_high8 = ((uintptr_t)&tss >> 24) & 0xFF;
+    gdt.tss.base_upper32 = (uintptr_t)&tss >> 32;
+}
 
-    gdt_flush(&gdt_pointer);
-    tss_flush();
+void tss_set_stack(uintptr_t stack) {
+    tss.rsp[0] = stack;
 }

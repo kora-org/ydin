@@ -20,11 +20,12 @@ void __panic(char *file, const char function[20], int line, int is_isr, exceptio
     uint8_t* rip = __builtin_return_address(0);
     uint64_t* rbp = __builtin_frame_address(0);
     printf("\n");
-    if (is_isr == 0)
-        log("Kernel panic: %s\n", message);
-    else
-        log("Kernel panic: Exception occured\n");
-    vprintf(message, args);
+    if (is_isr == 0) {
+        log("Kernel panic: ");
+        vprintf(message, args);
+        printf("\n");
+    } else
+    log("Kernel panic: Exception occured\n");
     va_end(args);
     if (is_isr == 0) {
         log("In %s() at line %d in %s\n", function, line, file);
