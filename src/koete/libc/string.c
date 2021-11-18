@@ -1,5 +1,4 @@
-#include "string.h"
-#include <limits.h>
+#include <string.h>
 
 int memcmp(const void *s1, const void *s2, size_t size) {
     const uint8_t *p1 = (const uint8_t *)s1;
@@ -49,7 +48,7 @@ void *memmove(void *dest, const void *src, size_t size) {
     return dest;
 }
 
-void *memset(void *buffer, uint8_t value, size_t size) {
+void *memset(void *buffer, int value, size_t size) {
 #ifdef __x86_64__
     // use optimized memset in x86-64
     asm volatile(
@@ -117,63 +116,4 @@ size_t strlen(const char *str) {
         len++;
 
     return len;
-}
-
-char *itoa(int value, char *buffer, int base) {
-    char *pbuffer = buffer;
-    int i = 0, len;
-    int negative = 0;
-
-    if (value == 0) {
-        buffer[i++] = '0';
-        buffer[i] = '\0';
-        return buffer;
-    }
-
-    if (value < 0 && base == 10) {
-        negative = 1;
-        value = -value;
-    }
-
-    do {
-        int digit = value % base;
-        *(pbuffer++) = (digit < 10 ? '0' + digit : 'a' + digit - 10);
-        value /= base;
-    } while (value > 0);
-
-    if (negative)
-        *(pbuffer++) = '-';
-
-    *(pbuffer) = '\0';
-
-    len = (pbuffer - buffer);
-    for (i = 0; i < len / 2; i++) {
-        char j = buffer[i];
-        buffer[i] = buffer[len - i - 1];
-        buffer[len - i - 1] = j;
-    }
-
-    return buffer;
-}
-
-int atoi(const char* str) {
-    int sign = 1, base = 0, i = 0;
-     
-    while (str[i] == ' ') i++;
-     
-    if (str[i] == '-' || str[i] == '+') {
-        sign = 1 - 2 * (str[i++] == '-');
-    }
-   
-    while (str[i] >= '0' && str[i] <= '9') {
-        if (base > INT_MAX / 10 || (base == INT_MAX / 10 && str[i] - '0' > 7)) {
-            if (sign == 1)
-                return INT_MAX;
-            else
-                return INT_MIN;
-        }
-        base = 10 * base + (str[i++] - '0');
-    }
-
-    return base * sign;
 }

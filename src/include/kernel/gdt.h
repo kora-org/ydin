@@ -39,6 +39,8 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
     gdt_entry_t null;
+    gdt_entry_t _16bit_code;
+    gdt_entry_t _16bit_data;
     gdt_entry_t kernel_code;
     gdt_entry_t kernel_data;
     gdt_entry_t user_data;

@@ -32,7 +32,7 @@ static struct stivale2_header_tag_smp smp_hdr_tag = {
         .identifier = STIVALE2_HEADER_TAG_SMP_ID,
         .next = (uint64_t)&la57_hdr_tag
     },
-    .flags = (1 << 1)
+    .flags = 0
 };
 
 static struct stivale2_header_tag_terminal terminal_hdr_tag = {

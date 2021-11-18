@@ -22,7 +22,8 @@ INTERNALCFLAGS := \
 	-ffreestanding -fno-pic \
 	-fno-stack-protector \
 	-mcmodel=kernel -MMD \
-	-mno-red-zone
+	-mno-red-zone -mno-sse \
+	-mno-sse2
 
 CFILES := $(wildcard *.c */*.c)
 SFILES := $(wildcard *.s */*.s)

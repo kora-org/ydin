@@ -22,4 +22,4 @@ typedef koete_u64_t koete_ulong_t;
 typedef koete_i128_t koete_ilonglong_t;
 typedef koete_u128_t koete_ulonglong_t;
 
-typedef char * koete_string_t;
+typedef char *koete_string_t;
