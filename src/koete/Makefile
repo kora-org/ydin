@@ -32,7 +32,7 @@ checkdir:
 $(LIBKOETE): $(OBJ) $(SOBJ)
 	@echo "[AR]\t\t$(@:../../build/koete/%=%)"
 	@$(AR) rcs $@ $(OBJ) $(SOBJ)
-	@ln -s $@ $(@:libkoete.a=libc.a)
+	@ln -fs $@ $(@:libkoete.a=libc.a)
 
 ../../build/koete/%.o: %.c
 	@echo "[CC]\t\t$<"

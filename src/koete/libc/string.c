@@ -13,23 +13,12 @@ int memcmp(const void *s1, const void *s2, size_t size) {
 }
 
 void *memcpy(void *dest, const void *src, size_t size) {
-#ifdef __x86_64__
-    // use optimized memcpy in x86-64
-    asm volatile("rep movsb"
-                 : "=D"(dest),
-                   "=S"(src),
-                   "=c"(size)
-                 : "D"(dest),
-                   "S"(src),
-                   "c"(size)
-                 : "memory");
-#else
     uint8_t *pdest = (uint8_t *)dest;
     const uint8_t *psrc = (const uint8_t *)src;
 
     for (size_t i = 0; i < size; i++)
         pdest[i] = psrc[i];
-#endif
+
     return dest;
 }
 
@@ -49,19 +38,11 @@ void *memmove(void *dest, const void *src, size_t size) {
 }
 
 void *memset(void *buffer, int value, size_t size) {
-#ifdef __x86_64__
-    // use optimized memset in x86-64
-    asm volatile(
-        "rep stosb"
-        : "=D"(buffer), "=c"(value)
-        : "0"(buffer), "a"(value), "1"(size)
-        : "memory");
-#else
     uint8_t *pbuffer = (uint8_t *)buffer;
 
     for (size_t i = 0; i < size; i++)
         pbuffer[i] = (uint8_t)value;
-#endif
+
     return buffer;
 }
 

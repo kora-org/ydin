@@ -37,9 +37,9 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     pmm_info.max_pages = KB_TO_PAGES(pmm_info.memory_size);
     pmm_info.used_pages = pmm_info.max_pages;
 
-    size_t bitmap_byte_size = ALIGN_UP(ALIGN_DOWN(highest_page, PAGE_SIZE) / PAGE_SIZE / 8, PAGE_SIZE);
+    size_t bitmap_size = ALIGN_UP((highest_page, PAGE_SIZE) / 8, PAGE_SIZE);
 
-    bitmap->size = bitmap_byte_size;
+    bitmap->size = bitmap_size;
 
     log("Memory specifications:\n");
     current_entry = &pmm_info.memory_map->memmap[0];
