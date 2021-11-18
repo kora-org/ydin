@@ -12,8 +12,7 @@ INTERNALLDFLAGS := \
 	-nostdlib \
 	-zmax-page-size=0x1000 \
 	-static \
-	-L../../build/koete -lkoete \
-	-ztext -zmuldefs
+	-L../../build/koete -lkoete
 
 INTERNALCFLAGS := \
 	-I../include \

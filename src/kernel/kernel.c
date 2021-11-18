@@ -22,6 +22,8 @@ struct stivale2_struct_tag_kernel_base_address *kernel_base;
 int term_cols;
 int term_rows;
 
+void (*term_write)(const char *string, size_t length);
+
 static struct stivale2_tag la57_hdr_tag = {
     .identifier = STIVALE2_HEADER_TAG_5LV_PAGING_ID,
     .next = 0

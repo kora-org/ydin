@@ -60,7 +60,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
         if (current_entry->length >= bitmap->size) {
             bitmap->map = (uint8_t *)(TO_VIRTUAL_ADDRESS(current_entry->base));
 
-            //memset((void *)bitmap->map, 0xFF, bitmap->size);
+            memset((void *)bitmap->map, 0xFF, bitmap->size);
 
             current_entry->base += bitmap->size;
             current_entry->length -= bitmap->size;
