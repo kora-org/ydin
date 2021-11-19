@@ -13,6 +13,6 @@ struct pmm {
 
 void pmm_init(struct stivale2_struct *stivale2_struct);
 const char *get_mmap_entry_type(uint32_t type);
-void *pmm_find_first_free_page(size_t page_count);
-void *pmm_alloc(size_t page_count);
-void pmm_free(void *pointer, size_t page_count);
+void *pmm_find_first_free_page(size_t count);
+void *pmm_alloc(size_t count);
+void pmm_free(void *pointer, size_t count);

@@ -15,6 +15,8 @@ static uint8_t check_la57(void) {
 
 void vmm_init(struct stivale2_struct *stivale2_struct) {
     struct stivale2_struct_tag_memmap *memory_map = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);
+    struct stivale2_struct_tag_pmrs *pmr_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_PMRS_ID);
+    struct stivale2_pmr *pmrs = pmr_tag->pmrs;
     root_page_directory = vmm_create_page_directory();
 
     if (check_la57()) {
@@ -33,11 +35,18 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
 
     // 2/4: map higher half kernel space
     for (uint64_t i = 0; i < 4 * GB; i += PAGE_SIZE)
-        vmm_map_page(root_page_directory, i, TO_VIRTUAL_ADDRESS(i), PTE_PRESENT | PTE_READ_WRITE);
+        vmm_map_page(root_page_directory, i, i + PHYSICAL_OFFSET, PTE_PRESENT | PTE_READ_WRITE);
 
     // 3/4: map protected memory ranges
-    for (uint64_t i = 0; i < 0x80000000; i += PAGE_SIZE)
-        vmm_map_page(root_page_directory, i, TO_PHYSICAL_ADDRESS(i), PTE_PRESENT | PTE_READ_WRITE);
+    for (size_t i = 0; i < pmr_tag->entries; i++) {
+        uint64_t virt = pmrs[i].base;
+        uint64_t phys = PHYSICAL_ADDRESS + (virt - VIRTUAL_ADDRESS);
+        uint64_t pf =
+            (pmrs[i].permissions & STIVALE2_PMR_EXECUTABLE ? 0 : 1UL << 63) |
+            (pmrs[i].permissions & STIVALE2_PMR_WRITABLE ? 1 << 1 : 0) | 1;
+        for (uint64_t p = 0; i < 0x80000000; p += PAGE_SIZE)
+            vmm_map_page(root_page_directory, phys + p, virt + p, pf);
+    }
 
     // 4/4: map stivale2 structs
     for (uint64_t i = 0; i < memory_map->entries; i++) {
@@ -45,7 +54,7 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
 
         if (current_entry->type == STIVALE2_MMAP_USABLE) {
             for (uint64_t j = 0; j < memory_map->memmap[i].length; j += PAGE_SIZE)
-                vmm_map_page(root_page_directory, TO_VIRTUAL_ADDRESS(j), j, PTE_PRESENT | PTE_READ_WRITE);
+                vmm_map_page(root_page_directory, j, j + PHYSICAL_OFFSET, PTE_PRESENT | PTE_READ_WRITE);
         }
     }
 
@@ -55,8 +64,7 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
 
 uint64_t *vmm_create_page_directory(void) {
     uint64_t *new_page_directory = pmm_alloc(1);
-
-    memset((void *)FROM_VIRTUAL_ADDRESS((uint64_t)new_page_directory), 0, PAGE_SIZE);
+    memset((void *)new_page_directory, 0, PAGE_SIZE);
     return new_page_directory;
 }
 
@@ -64,7 +72,7 @@ static uint64_t *vmm_get_page_map_level(uint64_t *page_map_level_X, uintptr_t in
     if (page_map_level_X[index_X] & 1)
         return (uint64_t *)(page_map_level_X[index_X] & ~(511));
     else {
-        page_map_level_X[index_X] = FROM_VIRTUAL_ADDRESS((uint64_t)pmm_alloc(1)) | flags;
+        page_map_level_X[index_X] = (uint64_t)pmm_alloc(1) | flags;
         return (uint64_t *)(page_map_level_X[index_X] & ~(511));
     }
 }
@@ -115,5 +123,5 @@ void vmm_flush_tlb(void *address) {
 }
 
 void vmm_activate_page_directory(uint64_t *current_page_directory) {
-    asm volatile("mov %0, %%cr3" : : "r" (FROM_VIRTUAL_ADDRESS((uint64_t)current_page_directory)) : "memory");
+    asm volatile("mov %0, %%cr3" : : "r" ((uint64_t)current_page_directory) : "memory");
 }

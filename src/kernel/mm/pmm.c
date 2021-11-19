@@ -58,9 +58,9 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
             continue;
 
         if (current_entry->length >= bitmap->size) {
-            bitmap->map = (uint8_t *)(TO_VIRTUAL_ADDRESS(current_entry->base));
+            bitmap->map = (uint8_t *)current_entry->base + PHYSICAL_OFFSET;
 
-            memset((void *)bitmap->map, 0xFF, bitmap->size);
+            //memset((void *)bitmap->map, 0xFF, bitmap->size);
 
             current_entry->base += bitmap->size;
             current_entry->length -= bitmap->size;
@@ -94,11 +94,11 @@ const char *get_mmap_entry_type(uint32_t type) {
     }
 }
 
-void *pmm_find_first_free_page(size_t page_count) {
-    if (page_count == 0)
+void *pmm_find_first_free_page(size_t count) {
+    if (count == 0)
         return NULL;
 
-    for (size_t counter = 0; counter < page_count; counter++) {
+    for (size_t h = 0; h < count; h++) {
         for (size_t i = 0; i < PAGE_TO_BIT(highest_page); i++) {
             if (!bitmap_check(bitmap, i))
                 return (void *)BIT_TO_PAGE(i);
@@ -108,30 +108,30 @@ void *pmm_find_first_free_page(size_t page_count) {
     return NULL;
 }
 
-void *pmm_alloc(size_t page_count) {
+void *pmm_alloc(size_t count) {
     if (pmm_info.used_pages <= 0)
         return NULL;
 
-    void *pointer = pmm_find_first_free_page(page_count);
+    void *pointer = pmm_find_first_free_page(count);
 
     if (pointer == NULL)
         return NULL;
 
     uint64_t index = (uint64_t)pointer / PAGE_SIZE;
 
-    for (size_t i = 0; i < page_count; i++)
+    for (size_t i = 0; i < count; i++)
         bitmap_set(bitmap, index + i);
 
-    pmm_info.used_pages += page_count;
+    pmm_info.used_pages += count;
 
-    return (void *)(uint64_t)(TO_VIRTUAL_ADDRESS(index * PAGE_SIZE));
+    return (void *)((index * PAGE_SIZE) + PHYSICAL_OFFSET);
 }
 
-void pmm_free(void *pointer, size_t page_count) {
-    uint64_t index = FROM_VIRTUAL_ADDRESS((uint64_t)pointer) / PAGE_SIZE;
+void pmm_free(void *pointer, size_t count) {
+    uint64_t page = (uint64_t)pointer / PAGE_SIZE;
 
-    for (size_t i = 0; i < page_count; i++)
-        bitmap_unset(bitmap, index + i);
+    for (size_t i = 0; i < page + count; i++)
+        bitmap_unset(bitmap, i);
 
-    pmm_info.used_pages -= page_count;
+    pmm_info.used_pages -= count;
 }
