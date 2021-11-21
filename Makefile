@@ -1,24 +1,53 @@
-ISO = build/faruos.iso
-QEMUFLAGS ?=
+SRCDIR = ./src
+BUILDDIR = ./build
+EXTERNALDIR = ./external
 
-.PHONY: all run clean
+ISO = $(BUILDDIR)/faruos.iso
 
-all: $(ISO)
+CC = clang -target x86_64-none-elf
+AS = nasm
+LD = ld.lld
+AR = llvm-ar
+QEMU = qemu-system-x86_64
+
+CFLAGS ?= -O0 -gdwarf -pipe
+ASFLAGS ?=
+LDFLAGS ?=
+QEMUFLAGS ?= -M q35
+
+LDHARDFLAGS := \
+	-nostdlib -static \
+	-L$(BUILDDIR)/koete -lkoete
+
+CHARDFLAGS := \
+	-I$(SRCDIR)/include \
+	-I$(EXTERNALDIR)/stivale \
+	-nostdlib -std=gnu11 \
+	-ffreestanding -fno-pic \
+	-fno-stack-protector \
+	-mcmodel=kernel -MMD \
+	-mno-red-zone
+
+.DEFAULT_GOAL: all
+.PHONY: all koete kernel clean clean-koete clean-kernel
+
+all: mkbuilddir $(ISO)
+
+mkbuilddir:
+	@mkdir -p $(patsubst $(SRCDIR)/%, $(BUILDDIR)/%, $(shell find $(SRCDIR)/koete -type d))
+	@mkdir -p $(patsubst $(SRCDIR)/%, $(BUILDDIR)/%, $(shell find $(SRCDIR)/kernel -type d))
+
+include $(SRCDIR)/koete/config.make
+include $(SRCDIR)/kernel/config.make
 
 run: $(ISO)
 	@echo "[QEMU]\t\t$(<:build/%=%)"
-	@qemu-system-x86_64 -M q35 -m 4G -no-reboot -no-shutdown $(QEMUFLAGS) -cdrom $(ISO)
+	@$(QEMU) -m 4G -no-reboot -no-shutdown $(QEMUFLAGS) -cdrom $(ISO)
 
 limine:
 	@$(MAKE) --no-print-directory -C external/limine
 
-koete:
-	@$(MAKE) --no-print-directory -C src/koete
-
-kernel: koete
-	@$(MAKE) --no-print-directory -C src/kernel
-
-$(ISO): limine kernel
+$(ISO): limine koete kernel
 	@rm -rf build/sysroot
 	@cp -r src/sysroot build/sysroot
 	@cp build/kernel/kernel.elf external/limine/limine.sys build/sysroot/boot
@@ -33,7 +62,6 @@ $(ISO): limine kernel
 	@external/limine/limine-install $(ISO) >/dev/null 2>&1
 	@rm -rf build/sysroot
 
-clean:
-	@rm -f $(ISO)
-	@$(MAKE) --no-print-directory -C src/koete clean
-	@$(MAKE) --no-print-directory -C src/kernel clean
+clean: clean-kernel clean-koete
+	@$(RM)r $(ISO)
+	@$(RM)r $(BUILDDIR)
