@@ -117,7 +117,7 @@ void _start(struct stivale2_struct *stivale2_struct) {
     term_cols = terminal_tag->cols;
     term_rows = terminal_tag->rows;
 
-    printf("Welcome to FaruOS!\n");
+    printf("FaruOS version %s\n", __faruos_version__);
     printf("Compiled in %s with %s\n", __DATE__, __VERSION__);
     printf("\n");
     module_load(&gdt_init, "GDT");

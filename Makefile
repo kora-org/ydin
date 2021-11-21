@@ -2,6 +2,19 @@ SRCDIR = src
 BUILDDIR = build
 EXTERNALDIR = external
 
+BRANCH := $(shell git branch --show-current)
+TAGCOMMIT := $(shell git rev-list --abbrev-commit --tags --max-count=1)
+TAG := $(shell git describe --abbrev=0 --tags $(TAGCOMMIT) 2>/dev/null || true)
+COMMIT := $(shell git rev-parse --short HEAD)
+DATE := $(shell git log -1 --format=%cd --date=format:"%Y%m%d")
+VERSION := $(TAG:v%=%)
+ifneq ($(TAGCOMMIT), $(COMMIT))
+	VERSION := $(VERSION)-dev-$(BRANCH)-$(COMMIT)
+endif
+ifeq ($(TAG:v%=%),)
+	VERSION := git-$(BRANCH)-$(COMMIT)
+endif
+
 ISO = $(BUILDDIR)/faruos.iso
 
 CC = clang -target x86_64-none-elf
@@ -26,7 +39,10 @@ CHARDFLAGS := \
 	-ffreestanding -fno-pic \
 	-fno-stack-protector \
 	-mcmodel=kernel -MMD \
-	-mno-red-zone
+	-mno-red-zone -D__faruos__ \
+	-D__faruos_version__='"$(VERSION)"' \
+	-D__faruos_build__='"$(COMMIT)"' \
+	-D__faruos_date__='"$(DATE)"'
 
 .DEFAULT_GOAL: all
 .PHONY: all koete kernel clean clean-koete clean-kernel

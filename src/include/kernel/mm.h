@@ -1,7 +1,7 @@
 #pragma once
 #include <kernel/kernel.h>
 
-#define PHYSICAL_OFFSET ((uint64_t)0xFFFF800000000000)
+#define PHYSICAL_OFFSET ((uint64_t)0xffff800000000000)
 
 #define BIT_TO_PAGE(bit) ((size_t)bit * 0x1000)
 #define PAGE_TO_BIT(page) ((size_t)page / 0x1000)

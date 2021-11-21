@@ -19,8 +19,8 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
 
-        log("- Memory map entry No. %d:\n", i);
-        log("  Base: 0x%.16llx, Length: 0x%.16llx, Type: %s\n", current_entry->base, current_entry->length, get_mmap_entry_type(current_entry->type));
+        log("- Memory map entry 0x%.12llx-0x%.12llx:\n", current_entry->base, current_entry->base + current_entry->length);
+        log("  Base: 0x%.12llx, Length: 0x%.12llx, Type: %s\n", current_entry->base, current_entry->length, get_mmap_entry_type(current_entry->type));
 
         if (current_entry->type != STIVALE2_MMAP_USABLE &&
             current_entry->type != STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE &&
@@ -43,7 +43,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
 
     log("Memory specifications:\n");
     current_entry = &pmm_info.memory_map->memmap[0];
-    log("- Total amount of memory: %d MB\n", ((current_entry->base + current_entry->length - 1) / 1024));
+    log("- Total amount of memory: %d MB\n", ((current_entry->base + current_entry->length - 1) / 1000));
     log("- Size of bitmap: %d kB\n", bitmap->size / 1024);
 
     log("Initializing PMM...");
@@ -60,7 +60,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
         if (current_entry->length >= bitmap->size) {
             bitmap->map = (uint8_t *)current_entry->base + PHYSICAL_OFFSET;
 
-            //memset((void *)bitmap->map, 0xFF, bitmap->size);
+            memset((void *)bitmap->map, 0xFF, bitmap->size);
 
             current_entry->base += bitmap->size;
             current_entry->length -= bitmap->size;
@@ -76,7 +76,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
             pmm_free((void *)current_entry->base, current_entry->length / PAGE_SIZE);
     }
 
-    bitmap_set(bitmap, 0);
+    bitmap_set(bitmap, 0xFF);
     printf("\033[32mOK\033[0m\n");
 }
 
