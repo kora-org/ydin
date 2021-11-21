@@ -8,16 +8,16 @@ KOETE_ASMOBJ := $(patsubst $(SRCDIR)/%, $(BUILDDIR)/%, $(KOETE_ASMFILES:.s=.s.o)
 koete: $(LIBKOETE)
 
 $(LIBKOETE): $(KOETE_OBJ) $(KOETE_ASMOBJ)
-	@echo "[AR]\t\t$(@:$(dirname $(LIBKOETE))/%=%)"
+	@echo "[AR]\t\t$(@:$(BUILDDIR)/koete/%=%)"
 	@$(AR) rcs $@ $(KOETE_OBJ) $(KOETE_ASMOBJ)
 	@ln -fs $@ $(@:libkoete.a=libc.a)
 
 $(BUILDDIR)/koete/%.o: $(SRCDIR)/koete/%.c
-	@echo "[CC]\t\t$<"
+	@echo "[CC]\t\t$(<:$(SRCDIR)/%=%)"
 	@$(CC) $(CFLAGS) $(CHARDFLAGS) -c $< -o $@
 
 $(BUILDDIR)/koete/%.s.o: $(SRCDIR)/koete/%.s
-	@echo "[AS]\t\t$<"
+	@echo "[AS]\t\t$(<:$(SRCDIR)/%=%)"
 	@$(AS) -felf64 -g -F dwarf $< -o $@
 
 clean-koete:

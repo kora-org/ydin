@@ -12,11 +12,11 @@ $(KERNEL): $(KERNEL_OBJ) $(KERNEL_ASMOBJ)
 	@$(LD) $(KERNEL_OBJ) $(KERNEL_ASMOBJ) $(LDFLAGS) $(LDHARDFLAGS) -T$(SRCDIR)/kernel/linker.ld -zmax-page-size=0x1000 -o $@
 
 $(BUILDDIR)/kernel/%.o: $(SRCDIR)/kernel/%.c
-	@echo "[CC]\t\t$<"
+	@echo "[CC]\t\t$(<:$(SRCDIR)/%=%)"
 	@$(CC) $(CFLAGS) $(CHARDFLAGS) -c $< -o $@
 
 $(BUILDDIR)/kernel/%.s.o: $(SRCDIR)/kernel/%.s
-	@echo "[AS]\t\t$<"
+	@echo "[AS]\t\t$(<:$(SRCDIR)/%=%)"
 	@$(AS) -felf64 -g -F dwarf $< -o $@
 
 clean-kernel:
