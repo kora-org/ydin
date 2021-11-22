@@ -118,7 +118,7 @@ void _start(struct stivale2_struct *stivale2_struct) {
     term_rows = terminal_tag->rows;
 
     printf("FaruOS version %s\n", __faruos_version__);
-    printf("Compiled in %s with %s\n", __DATE__, __VERSION__);
+    printf("Compiled in %s at %s with %s\n", __DATE__, __TIME__, __VERSION__);
     printf("\n");
     module_load(&gdt_init, "GDT");
     pmm_init(stivale2_struct);

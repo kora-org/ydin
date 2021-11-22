@@ -11,6 +11,8 @@ gdt_t gdt = {
     {0xffff, 0, 0, 0x92, 0xcf, 0}, // 32-bit data
     {0, 0, 0, 0x9a, 0xa2, 0}, // 64-bit code
     {0, 0, 0, 0x92, 0xa0, 0}, // 64-bit data
+    {0, 0, 0, 0xF2, 0, 0}, // user data
+    {0, 0, 0, 0xFA, 0x20, 0}, // user code
     {0x68, 0, 0, 0x89, 0x20, 0, 0, 0} // tss
 };
 

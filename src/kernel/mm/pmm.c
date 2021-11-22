@@ -19,8 +19,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
 
-        log("- Memory map entry 0x%.12llx-0x%.12llx:\n", current_entry->base, current_entry->base + current_entry->length);
-        log("  Base: 0x%.12llx, Length: 0x%.12llx, Type: %s\n", current_entry->base, current_entry->length, get_mmap_entry_type(current_entry->type));
+        log("- Base: 0x%.16llx, Length: 0x%.16llx, Type: %s\n", current_entry->base, current_entry->length, get_mmap_entry_type(current_entry->type));
 
         if (current_entry->type != STIVALE2_MMAP_USABLE &&
             current_entry->type != STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE &&
