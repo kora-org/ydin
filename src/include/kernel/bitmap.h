@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define BIT_TO_PAGE(bit)	((size_t)bit * 0x1000)
-#define PAGE_TO_BIT(page)	((size_t)page / 0x1000)
+#define BIT_TO_PAGE(bit) ((size_t)bit * 0x1000)
+#define PAGE_TO_BIT(page) ((size_t)page / 0x1000)
 
 typedef struct {
     uint8_t *map;
