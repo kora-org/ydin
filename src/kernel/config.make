@@ -9,7 +9,7 @@ kernel: $(KERNEL)
 
 $(KERNEL): $(KERNEL_OBJ) $(KERNEL_ASMOBJ)
 	@echo "[LD]\t\t$(@:$(BUILDDIR)/kernel/%=%)"
-	@$(LD) $(KERNEL_OBJ) $(KERNEL_ASMOBJ) $(LDFLAGS) $(LDHARDFLAGS) -T$(SRCDIR)/kernel/linker.ld -zmax-page-size=0x1000 -o $@
+	@$(LD) $(KERNEL_OBJ) $(KERNEL_ASMOBJ) $(LDFLAGS) $(LDHARDFLAGS) -T$(SRCDIR)/kernel/linker.ld -o $@
 
 $(BUILDDIR)/kernel/%.o: $(SRCDIR)/kernel/%.c
 	@echo "[CC]\t\t$(<:$(SRCDIR)/%=%)"

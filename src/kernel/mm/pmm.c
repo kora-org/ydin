@@ -20,7 +20,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
 
-        log("- Base: 0x%.16llx, Length: 0x%.16llx, Type: %s\n", current_entry->base, current_entry->length, get_mmap_entry_type(current_entry->type));
+        log("Entry %d: base=0x%.16llx, length=0x%.16llx, type=%s\n", i + 1, current_entry->base, current_entry->length, get_mmap_entry_type(current_entry->type));
 
         if (current_entry->type != STIVALE2_MMAP_USABLE &&
             current_entry->type != STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE &&
@@ -44,7 +44,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     log("Memory specifications:\n");
     current_entry = &pmm_info.memory_map->memmap[0];
     log("- Total amount of memory: %d MB\n", ((current_entry->base + current_entry->length - 1) / 1024));
-    log("- Size of bitmap: %d kB\n", bitmap->size / 1024);
+    log("- Size of bitmap: %d KB\n", bitmap->size / 1024);
 
     log("Initializing PMM...");
     for (int i = 0; i < term_cols - (strlen("[kernel] Initializing PMM") + strlen("...")) - strlen("OK "); i++) {
@@ -54,13 +54,8 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
 
-        if (current_entry->type == STIVALE2_MMAP_USABLE)
-            continue;
-
-        if (current_entry->length >= bitmap->size) {
-            bitmap->map = (uint8_t *)current_entry->base + PHYSICAL_OFFSET;
-
-            memset((void *)bitmap->map, 0xFF, bitmap->size);
+        if (current_entry->type == STIVALE2_MMAP_USABLE && current_entry->length >= bitmap->size) {
+            bitmap->map = (uint8_t *)(current_entry->base + PHYSICAL_OFFSET);
 
             current_entry->base += bitmap->size;
             current_entry->length -= bitmap->size;
@@ -69,6 +64,8 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
         }
     }
 
+    bitmap_set(bitmap, 0xFF);
+
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
 
@@ -76,7 +73,6 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
             pmm_free((void *)current_entry->base, current_entry->length / PAGE_SIZE);
     }
 
-    bitmap_set(bitmap, 0);
     printf("\033[32mOK\033[0m\n");
 }
 
@@ -125,6 +121,12 @@ void *pmm_alloc(size_t count) {
     pmm_info.used_pages += count;
 
     return (void *)((index * PAGE_SIZE) + PHYSICAL_OFFSET);
+}
+
+void *pmm_alloc_zero(size_t count) {
+    void *page = pmm_alloc(count);
+    memset(page, 0, count * PAGE_SIZE);
+    return page;
 }
 
 void pmm_free(void *pointer, size_t count) {

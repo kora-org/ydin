@@ -30,7 +30,8 @@ QEMUFLAGS ?= -M q35
 
 LDHARDFLAGS := \
 	-nostdlib -static \
-	-L$(BUILDDIR)/koete -lkoete
+	-L$(BUILDDIR)/koete -lkoete \
+	-zmax-page-size=0x1000
 
 CHARDFLAGS := \
 	-I$(SRCDIR)/include \
@@ -58,7 +59,7 @@ include $(SRCDIR)/kernel/config.make
 
 run: all
 	@echo "[QEMU]\t\t$(ISO:$(BUILDDIR)/%=%)"
-	@$(QEMU) -m 4G -no-reboot -no-shutdown $(QEMUFLAGS) -cdrom $(ISO)
+	@$(QEMU) -m 8G -no-reboot -no-shutdown $(QEMUFLAGS) -cdrom $(ISO)
 
 limine:
 	@$(MAKE) --no-print-directory -C external/limine

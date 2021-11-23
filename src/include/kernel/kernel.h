@@ -3,8 +3,8 @@
 #include <stddef.h>
 #include <stivale2.h>
 
-#define PAGE_SIZE 8192
-extern uint8_t stack[PAGE_SIZE];
+#define PAGE_SIZE 4096
+extern uint8_t stack[8192];
 
 extern struct stivale2_struct *stivale2;
 extern struct stivale2_struct_tag_framebuffer *fb_tag;
