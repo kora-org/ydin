@@ -17,7 +17,7 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
     struct stivale2_struct_tag_memmap *memory_map = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);
     struct stivale2_struct_tag_pmrs *pmr_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_PMRS_ID);
     struct stivale2_pmr *pmrs = pmr_tag->pmrs;
-    root_page_directory = (uint64_t *)pmm_alloc_zero(1);
+    root_page_directory = vmm_create_page_directory();
 
     if (check_la57()) {
         is_la57_enabled = 1;
@@ -41,9 +41,9 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
     for (size_t i = 0; i < pmr_tag->entries; i++) {
         uint64_t virt = pmrs[i].base;
         uint64_t phys = PHYSICAL_ADDRESS + (virt - VIRTUAL_ADDRESS);
-        
-        for (uint64_t p = 0; i < 0x80000000; p += PAGE_SIZE)
-            vmm_map_page(root_page_directory, phys + p, virt + p, PTE_PRESENT | PTE_READ_WRITE);
+
+        for (uint64_t j = 0; j < 0x80000000; j += PAGE_SIZE)
+            vmm_map_page(root_page_directory, phys + j, virt + j, PTE_PRESENT | PTE_READ_WRITE);
     }
 
     // 4/4: map stivale2 structs
@@ -58,6 +58,10 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
 
     vmm_activate_page_directory(root_page_directory);
     printf("\033[32mOK\033[0m\n");
+}
+
+uint64_t *vmm_create_page_directory(void) {
+    return (uint64_t *)pmm_alloc_zero(1);
 }
 
 static uint64_t *vmm_get_next_level(uint64_t *page_map_level, uintptr_t index, int flags) {

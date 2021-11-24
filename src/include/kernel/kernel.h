@@ -4,7 +4,9 @@
 #include <stivale2.h>
 
 #define PAGE_SIZE 4096
-extern uint8_t stack[8192];
+#define STACK_SIZE 65536
+
+extern uint8_t stack[STACK_SIZE];
 
 extern struct stivale2_struct *stivale2;
 extern struct stivale2_struct_tag_framebuffer *fb_tag;

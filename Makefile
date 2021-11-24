@@ -26,7 +26,8 @@ QEMU = qemu-system-x86_64
 CFLAGS ?= -O0 -gdwarf -pipe
 ASFLAGS ?=
 LDFLAGS ?=
-QEMUFLAGS ?= -M q35
+QEMUFLAGS ?=
+QEMUMEMSIZE ?= 2G
 
 LDHARDFLAGS := \
 	-nostdlib -static \
@@ -59,7 +60,7 @@ include $(SRCDIR)/kernel/config.make
 
 run: all
 	@echo "[QEMU]\t\t$(ISO:$(BUILDDIR)/%=%)"
-	@$(QEMU) -m 8G -no-reboot -no-shutdown $(QEMUFLAGS) -cdrom $(ISO)
+	@$(QEMU) -m $(QEMUMEMSIZE) -no-reboot -no-shutdown $(QEMUFLAGS) -cdrom $(ISO)
 
 limine:
 	@$(MAKE) --no-print-directory -C external/limine

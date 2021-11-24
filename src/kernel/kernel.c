@@ -12,7 +12,7 @@
 #include <kernel/panic.h>
 #include <kernel/kernel.h>
 
-uint8_t stack[8192];
+uint8_t stack[STACK_SIZE];
 
 struct stivale2_struct *stivale2;
 struct stivale2_struct_tag_framebuffer *fb_tag;
