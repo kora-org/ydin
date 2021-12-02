@@ -78,15 +78,15 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
 
 const char *get_mmap_entry_type(uint32_t type) {
     switch (type) {
-        case STIVALE2_MMAP_USABLE: return "Usable";
-        case STIVALE2_MMAP_RESERVED: return "Reserved";
-        case STIVALE2_MMAP_ACPI_RECLAIMABLE: return "ACPI Reclaimable";
-        case STIVALE2_MMAP_ACPI_NVS: return "ACPI Non Volatile Storage";
-        case STIVALE2_MMAP_BAD_MEMORY: return "Bad Memory";
-        case STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE: return "Bootloader Reclaimable";
-        case STIVALE2_MMAP_KERNEL_AND_MODULES: return "Kernel And Modules";
-        case STIVALE2_MMAP_FRAMEBUFFER: return "Framebuffer";
-        default: return "Unknown";
+        case STIVALE2_MMAP_USABLE: return "USABLE";
+        case STIVALE2_MMAP_RESERVED: return "RESERVED";
+        case STIVALE2_MMAP_ACPI_RECLAIMABLE: return "ACPI_RECLAIMABLE";
+        case STIVALE2_MMAP_ACPI_NVS: return "ACPI_NON_VOLATILE_STORAGE";
+        case STIVALE2_MMAP_BAD_MEMORY: return "BAD_MEMORY";
+        case STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE: return "BOOTLOADER_RECLAIMABLE";
+        case STIVALE2_MMAP_KERNEL_AND_MODULES: return "KERNEL_AND_MODULES";
+        case STIVALE2_MMAP_FRAMEBUFFER: return "FRAMEBUFFER";
+        default: return "UNKNOWN";
     }
 }
 
