@@ -29,31 +29,31 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
         printf(" ");
     }
 
-    // 1/4: map first 4 GiB of memory
-    for (uint64_t i = 0; i < 4 * GB; i += PAGE_SIZE)
-        vmm_map_page(root_page_directory, i, i, PTE_PRESENT | PTE_READ_WRITE);
+    // q/4: map stivale2 structs
+    for (uint64_t i = 0; i < memory_map->entries; i++) {
+        struct stivale2_mmap_entry *current_entry = &memory_map->memmap[i];
 
-    // 2/4: map higher half kernel space
-    for (uint64_t i = 0; i < 4 * GB; i += PAGE_SIZE)
-        vmm_map_page(root_page_directory, i, i + PHYSICAL_OFFSET, PTE_PRESENT | PTE_READ_WRITE);
+        if (current_entry->type == STIVALE2_MMAP_USABLE || current_entry->type == STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE || current_entry->type == STIVALE2_MMAP_FRAMEBUFFER) {
+            for (uint64_t j = 0; j < memory_map->memmap[i].length; j += PAGE_SIZE)
+                vmm_map_page(root_page_directory, j, j + KERNEL_DATA_OFFSET, PTE_PRESENT | PTE_READ_WRITE);
+        }
+    }
 
-    // 3/4: map protected memory ranges
+    // 2/4: map 2 GB of kernel data
+    for (uint64_t i = 0; i < 2 * GB; i += PAGE_SIZE)
+        vmm_map_page(root_page_directory, i, i + KERNEL_DATA_OFFSET, PTE_PRESENT | PTE_READ_WRITE);
+
+    // 3/4: map 2 GB of kernel code
+    for (uint64_t i = 0; i < 2 * GB; i += PAGE_SIZE)
+        vmm_map_page(root_page_directory, i, i + KERNEL_CODE_OFFSET, PTE_PRESENT | PTE_READ_WRITE);
+
+    // 4/4: map protected memory ranges
     for (size_t i = 0; i < pmr_tag->entries; i++) {
         uint64_t virt = pmrs[i].base;
         uint64_t phys = PHYSICAL_ADDRESS + (virt - VIRTUAL_ADDRESS);
 
         for (uint64_t j = 0; j < 0x80000000; j += PAGE_SIZE)
             vmm_map_page(root_page_directory, phys + j, virt + j, PTE_PRESENT | PTE_READ_WRITE);
-    }
-
-    // 4/4: map stivale2 structs
-    for (uint64_t i = 0; i < memory_map->entries; i++) {
-        struct stivale2_mmap_entry *current_entry = &memory_map->memmap[i];
-
-        if (current_entry->type == STIVALE2_MMAP_USABLE) {
-            for (uint64_t j = 0; j < memory_map->memmap[i].length; j += PAGE_SIZE)
-                vmm_map_page(root_page_directory, j, j + PHYSICAL_OFFSET, PTE_PRESENT | PTE_READ_WRITE);
-        }
     }
 
     vmm_activate_page_directory(root_page_directory);

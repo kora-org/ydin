@@ -72,5 +72,5 @@ void idt_init() {
     }
  
     asm volatile ("lidt %0" : : "m"(idtr));
-    asm volatile ("sti");
+    enable_interrupts();
 }

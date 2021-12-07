@@ -37,7 +37,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     pmm_info.max_pages = KB_TO_PAGES(pmm_info.memory_size);
     pmm_info.used_pages = pmm_info.max_pages;
 
-    size_t bitmap_size = ALIGN_UP(ALIGN_DOWN(highest_page, PAGE_SIZE) / PAGE_SIZE / 8, PAGE_SIZE);
+    size_t bitmap_size = ALIGN_UP(highest_page / PAGE_SIZE / 8, PAGE_SIZE);
 
     bitmap->size = bitmap_size;
 
@@ -55,7 +55,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
         current_entry = &pmm_info.memory_map->memmap[i];
 
         if (current_entry->type == STIVALE2_MMAP_USABLE && current_entry->length >= bitmap->size) {
-            bitmap->map = (uint8_t *)(current_entry->base + PHYSICAL_OFFSET);
+            bitmap->map = (uint8_t *)(current_entry->base + KERNEL_DATA_OFFSET);
 
             memset((void *)bitmap->map, 0xFF, bitmap->size);
 
@@ -120,7 +120,7 @@ void *pmm_alloc(size_t count) {
 
     pmm_info.used_pages += count;
 
-    return (void *)((index * PAGE_SIZE) + PHYSICAL_OFFSET);
+    return (void *)((index * PAGE_SIZE) + KERNEL_DATA_OFFSET);
 }
 
 void *pmm_alloc_zero(size_t count) {

@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kernel/kernel.h>
+#include <kernel/idt.h>
 #include <kernel/isr.h>
 #include <kernel/panic.h>
 
@@ -33,8 +34,8 @@ void __panic(char *file, const char function[20], int line, int is_isr, exceptio
         log("Stack trace:\n");
         while (rbp) {
             log("    0x%.16llx\n", &rip);
-            rip = *(rbp - 1);
-            rbp = *(rbp + 0);
+            *rip = *(rbp - 1);
+            *rbp = *(rbp + 0);
         }
         log("\n");
     } else {
@@ -54,7 +55,7 @@ void __panic(char *file, const char function[20], int line, int is_isr, exceptio
 
     }
     log("System halted");
-    asm("cli");
+    disable_interrupts();
     for (;;) {
         halt();
     }
