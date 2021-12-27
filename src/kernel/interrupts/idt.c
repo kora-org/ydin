@@ -5,6 +5,7 @@
 #include <kernel/idt.h>
 #include <kernel/isr.h>
 #include <kernel/pic.h>
+#include <kernel/kernel.h>
 
 static idt_entry_t idt[256];
 static idtr_t idtr;
@@ -56,6 +57,7 @@ void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
 }
 
 void idt_init() {
+    log("Initializing IDT...\n");
     idtr.base = (uintptr_t)&idt[0];
     idtr.limit = (uint16_t)sizeof(idt_entry_t) * 256 - 1;
  
@@ -73,4 +75,5 @@ void idt_init() {
  
     asm volatile ("lidt %0" : : "m"(idtr));
     enable_interrupts();
+    log("IDT initialized!\n");
 }

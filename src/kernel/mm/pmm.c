@@ -10,6 +10,8 @@ bitmap_t *bitmap;
 size_t highest_page;
 
 void pmm_init(struct stivale2_struct *stivale2_struct) {
+    log("Initializing PMM...\n");
+
     struct stivale2_struct_tag_memmap *memory_map = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);
     pmm_info.memory_map = memory_map;
     struct stivale2_mmap_entry *current_entry;
@@ -20,7 +22,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
 
-        log("Entry %d: base=0x%.16llx, length=0x%.16llx, type=%s\n", i + 1, current_entry->base, current_entry->length, get_mmap_entry_type(current_entry->type));
+        log("Entry %d: base=0x%.16llX, length=0x%.16llX, type=%s\n", i + 1, current_entry->base, current_entry->length, mmap_get_entry_type(current_entry->type));
 
         if (current_entry->type != STIVALE2_MMAP_USABLE &&
             current_entry->type != STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE &&
@@ -37,7 +39,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     pmm_info.max_pages = KB_TO_PAGES(pmm_info.memory_size);
     pmm_info.used_pages = pmm_info.max_pages;
 
-    size_t bitmap_size = ALIGN_UP(highest_page / PAGE_SIZE / 8, PAGE_SIZE);
+    size_t bitmap_size = ALIGN_UP((highest_page / PAGE_SIZE) / 8, PAGE_SIZE);
 
     bitmap->size = bitmap_size;
 
@@ -45,11 +47,6 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
     current_entry = &pmm_info.memory_map->memmap[0];
     log("Total amount of used memory: %d kB\n", (current_entry->base + current_entry->length - 1) / 1024);
     log("Bitmap size: %d kB\n", bitmap->size / 1024);
-
-    log("Initializing PMM...");
-    for (int i = 0; i < term_cols - (strlen("[kernel] Initializing PMM") + strlen("...")) - strlen("OK "); i++) {
-        printf(" ");
-    }
 
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
@@ -73,10 +70,10 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
             pmm_free((void *)current_entry->base, current_entry->length / PAGE_SIZE);
     }
 
-    printf("\033[32mOK\033[0m\n");
+    log("PMM initialized!\n");
 }
 
-const char *get_mmap_entry_type(uint32_t type) {
+const char *mmap_get_entry_type(uint32_t type) {
     switch (type) {
         case STIVALE2_MMAP_USABLE: return "USABLE";
         case STIVALE2_MMAP_RESERVED: return "RESERVED";

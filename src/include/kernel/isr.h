@@ -2,7 +2,6 @@
 #include <stdint.h>
 
 #define EXCEPTION(n) \
-    __attribute__((interrupt)) \
     void isr_##n(exception_t *rsp) { \
         isr_handler(n, rsp); \
     }

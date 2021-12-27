@@ -20,6 +20,7 @@ gdt_pointer_t gdt_pointer;
 tss_t tss;
 
 void gdt_init(void) {
+    log("Initializing GDT...\n");
     tss_init();
 
     gdt_pointer.size = sizeof(gdt_t) - 1;
@@ -27,6 +28,7 @@ void gdt_init(void) {
 
     gdt_flush(&gdt_pointer);
     tss_flush();
+    log("GDT initialized!\n");
 }
 
 void tss_init(void) {

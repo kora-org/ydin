@@ -14,6 +14,8 @@ static uint8_t check_la57(void) {
 }
 
 void vmm_init(struct stivale2_struct *stivale2_struct) {
+    log("Initializing VMM...\n");
+
     struct stivale2_struct_tag_memmap *memory_map = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);
     struct stivale2_struct_tag_pmrs *pmr_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_PMRS_ID);
     struct stivale2_pmr *pmrs = pmr_tag->pmrs;
@@ -24,12 +26,7 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
         log("5-level paging supported!\n");
     }
 
-    log("Initializing VMM...");
-    for (int i = 0; i < term_cols - (strlen("[kernel] Initializing VMM") + strlen("...")) - strlen("OK "); i++) {
-        printf(" ");
-    }
-
-    // q/4: map stivale2 structs
+    // 1/4: map stivale2 structs
     for (uint64_t i = 0; i < memory_map->entries; i++) {
         struct stivale2_mmap_entry *current_entry = &memory_map->memmap[i];
 
@@ -57,7 +54,7 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
     }
 
     vmm_activate_page_directory(root_page_directory);
-    printf("\033[32mOK\033[0m\n");
+    log("VMM initialized\n");
 }
 
 uint64_t *vmm_create_page_directory(void) {
@@ -65,16 +62,13 @@ uint64_t *vmm_create_page_directory(void) {
 }
 
 static uint64_t *vmm_get_next_level(uint64_t *page_map_level, uintptr_t index, int flags) {
-    uint64_t *ret;
-
     if (page_map_level[index] & 1)
-        ret = (uint64_t *)(page_map_level[index] & ~(0xFFF));
+        return (uint64_t *)(page_map_level[index] & ~(0x1FF));
     else {
-        ret = pmm_alloc_zero(1);
-        page_map_level[index] = (uint64_t)ret | flags;
+        page_map_level[index] = (uint64_t)pmm_alloc_zero(1) | flags;
+        return (uint64_t *)(page_map_level[index] & ~(0x1FF));
     }
-
-    return ret;
+    return NULL;
 }
 
 void vmm_map_page(uint64_t *current_page_directory, uintptr_t physical_address, uintptr_t virtual_address, int flags) {
@@ -86,15 +80,10 @@ void vmm_map_page(uint64_t *current_page_directory, uintptr_t physical_address, 
         uintptr_t index1 = (virtual_address & ((uintptr_t)0x1FF << 12)) >> 12;
 
         uint64_t *page_map_level5 = current_page_directory;
-        uint64_t *page_map_level4 = NULL;
-        uint64_t *page_map_level3 = NULL;
-        uint64_t *page_map_level2 = NULL;
-        uint64_t *page_map_level1 = NULL;
-
-        page_map_level4 = vmm_get_next_level(page_map_level5, index5, flags);
-        page_map_level3 = vmm_get_next_level(page_map_level4, index4, flags);
-        page_map_level2 = vmm_get_next_level(page_map_level3, index3, flags);
-        page_map_level1 = vmm_get_next_level(page_map_level2, index2, flags);
+        uint64_t *page_map_level4 = vmm_get_next_level(page_map_level5, index5, flags);
+        uint64_t *page_map_level3 = vmm_get_next_level(page_map_level4, index4, flags);
+        uint64_t *page_map_level2 = vmm_get_next_level(page_map_level3, index3, flags);
+        uint64_t *page_map_level1 = vmm_get_next_level(page_map_level2, index2, flags);
 
         page_map_level1[index1] = physical_address | flags; 
     } else {
@@ -104,21 +93,17 @@ void vmm_map_page(uint64_t *current_page_directory, uintptr_t physical_address, 
         uintptr_t index1 = (virtual_address & ((uintptr_t)0x1FF << 12)) >> 12;
 
         uint64_t *page_map_level4 = current_page_directory;
-        uint64_t *page_map_level3 = NULL;
-        uint64_t *page_map_level2 = NULL;
-        uint64_t *page_map_level1 = NULL;
-
-        page_map_level3 = vmm_get_next_level(page_map_level4, index4, flags);
-        page_map_level2 = vmm_get_next_level(page_map_level3, index3, flags);
-        page_map_level1 = vmm_get_next_level(page_map_level2, index2, flags);
+        uint64_t *page_map_level3 = vmm_get_next_level(page_map_level4, index4, flags);
+        uint64_t *page_map_level2 = vmm_get_next_level(page_map_level3, index3, flags);
+        uint64_t *page_map_level1 = vmm_get_next_level(page_map_level2, index2, flags);
 
         page_map_level1[index1] = physical_address | flags; 
     }
 
-    vmm_flush_tlb((void *)virtual_address);
+    vmm_flush_tlb(virtual_address);
 }
 
-void vmm_flush_tlb(void *address) {
+void vmm_flush_tlb(uintptr_t address) {
     asm volatile("invlpg (%0)" : : "r" (address));
 }
 

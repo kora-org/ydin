@@ -23,7 +23,7 @@ LD = ld.lld
 AR = llvm-ar
 QEMU = qemu-system-x86_64
 
-CFLAGS ?= -O0 -gdwarf -pipe
+CFLAGS ?= -Og -gdwarf -pipe
 ASFLAGS ?=
 LDFLAGS ?=
 QEMUFLAGS ?=
@@ -40,7 +40,8 @@ CHARDFLAGS := \
 	-nostdlib -std=gnu11 \
 	-ffreestanding -fno-pic \
 	-fno-stack-protector \
-	-mcmodel=kernel -MMD \
+	-fsanitize=undefined \
+	-mcmodel=kernel -MMD -MP \
 	-mno-red-zone -D__faruos__ \
 	-D__faruos_version__='"$(VERSION)"' \
 	-D__faruos_build__='"$(COMMIT)"' \

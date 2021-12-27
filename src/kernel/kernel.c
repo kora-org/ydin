@@ -77,21 +77,12 @@ void *stivale2_get_tag(struct stivale2_struct *stivale2_struct, uint64_t id) {
     }
 }
 
-void log(const char *str, ...) {
+void __log(const char *file, int line, const char *str, ...) {
     va_list args;
     va_start(args, str);
-    printf("[kernel] ");
+    printf("[%s:%d] ", file, line);
     vprintf(str, args);
     va_end(args);
-}
-
-void module_load(void *module, char *name) {
-    log("Initializing %s...", name);
-    for (int i = 0; i < term_cols - (strlen("[kernel] Initializing ") + strlen(name) + strlen("...")) - strlen("OK "); i++) {
-        printf(" ");
-    }
-    ((void (*)())module)();
-    printf("\033[32mOK\033[0m\n");
 }
 
 void halt(void) {
@@ -118,15 +109,13 @@ void _start(struct stivale2_struct *stivale2_struct) {
     term_cols = terminal_tag->cols;
     term_rows = terminal_tag->rows;
 
-    printf("FaruOS version %s\n", __faruos_version__);
-    printf("Compiled in %s at %s with %s\n", __DATE__, __TIME__, __VERSION__);
-    printf("\n");
-    log("CPU vendor: %s\n", cpuid_string(0));
-    module_load(&gdt_init, "GDT");
+    log("FaruOS version %s\n", __faruos_version__);
+    log("Compiled in %s at %s with %s\n", __DATE__, __TIME__, __VERSION__);
+    gdt_init();
+    idt_init();
     pmm_init(stivale2_struct);
     vmm_init(stivale2_struct);
-    module_load(&idt_init, "IDT");
-    module_load(&pic_remap, "PIC");
+    pic_remap();
     printf("Hello World!");
     panic("panic test");
 

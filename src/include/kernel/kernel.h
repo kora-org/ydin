@@ -19,7 +19,8 @@ extern int term_rows;
 extern void (*term_write)(const char *string, size_t length);
 void *stivale2_get_tag(struct stivale2_struct *stivale2_struct, uint64_t id);
 void halt(void);
-void log(const char *str, ...);
+void __log(const char *file, int line, const char *str, ...);
+#define log(str...) __log(__FILE_NAME__, __LINE__, str);
 
 #define PHYSICAL_ADDRESS kernel_base->physical_base_address
 #define VIRTUAL_ADDRESS kernel_base->virtual_base_address

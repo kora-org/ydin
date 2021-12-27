@@ -1,5 +1,17 @@
 #include <string.h>
 
+void *memchr(const void *s, int c, size_t size) {
+    uint8_t *p = (uint8_t *)s;
+    uint8_t cc = (uint8_t)c;
+
+    for (size_t i = 0; i < size; i++, p++) {
+        if (*p == cc)
+            return p;
+    }
+
+    return NULL;
+}
+
 int memcmp(const void *s1, const void *s2, size_t size) {
     const uint8_t *p1 = (const uint8_t *)s1;
     const uint8_t *p2 = (const uint8_t *)s2;
@@ -13,12 +25,19 @@ int memcmp(const void *s1, const void *s2, size_t size) {
 }
 
 void *memcpy(void *dest, const void *src, size_t size) {
+#ifdef __x86_64__
+    // use optimized memcpy in x86-64
+    asm volatile("rep movsb"
+               : "=D"(dest), "=S"(src), "=c"(size)
+               : "D"(dest), "S"(src), "c"(size)
+               : "memory");
+#else
     uint8_t *pdest = (uint8_t *)dest;
     const uint8_t *psrc = (const uint8_t *)src;
 
     for (size_t i = 0; i < size; i++)
         pdest[i] = psrc[i];
-
+#endif
     return dest;
 }
 
@@ -38,12 +57,26 @@ void *memmove(void *dest, const void *src, size_t size) {
 }
 
 void *memset(void *buffer, int value, size_t size) {
+#ifdef __x86_64__
+    // use optimized memset in x86-64
+    asm volatile("rep stosb"
+               : "=D"(buffer), "=c"(value)
+               : "0"(buffer), "a"(value), "1"(size)
+               : "memory");
+#else
     uint8_t *pbuffer = (uint8_t *)buffer;
 
     for (size_t i = 0; i < size; i++)
         pbuffer[i] = (uint8_t)value;
-
+#endif
     return buffer;
+}
+
+char *strchr(const char *str, int ch) {
+    while (*str != (char)ch)
+        if (!*str++)
+            return 0;
+    return (char *)str;
 }
 
 char *strcpy(char *dest, const char *src) {
@@ -68,6 +101,15 @@ char *strncpy(char *dest, const char *src, size_t n) {
     return dest;
 }
 
+size_t strlen(const char *str) {
+    size_t len = 0;
+
+    while (str[len] != '\0')
+        len++;
+
+    return len;
+}
+
 int strcmp(const char *s1, const char *s2) {
     for (size_t i = 0; ; i++) {
         char c1 = s1[i], c2 = s2[i];
@@ -90,11 +132,41 @@ int strncmp(const char *s1, const char *s2, size_t n) {
     return 0;
 }
 
-size_t strlen(const char *str) {
-    size_t len = 0;
+size_t strspn(const char *s1, const char *s2) {
+    size_t ret = 0;
 
-    while (str[len] != '\0')
-        len++;
+    while (*s1 && strchr(s2, *s1++))
+        ret++;
 
-    return len;
+    return ret;    
+}
+
+size_t strcspn(const char *s1, const char *s2) {
+    size_t ret = 0;
+
+    while (*s1) {
+        if (strchr(s2, *s1))
+            return ret;
+        else
+            s1++, ret++;
+    }
+
+    return ret;
+}
+
+char *strtok(char *str, const char *delim) {
+    char *p = 0;
+
+    if (str)
+        p = str;
+    else if (!p)
+        return 0;
+
+    str = p + strspn(p, delim);
+    p = str + strcspn(str, delim);
+    if (p == str)
+        return p = 0;
+
+    p = *p ? *p = 0,p + 1 : 0;
+    return str;
 }
