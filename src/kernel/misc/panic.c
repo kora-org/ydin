@@ -53,6 +53,8 @@ void __panic(char *file, int line, int is_isr, exception_t *exception, char *mes
     uintptr_t *rip = __builtin_return_address(0);
     uintptr_t *rbp = __builtin_frame_address(0);
 
+    printf("\n");
+
     if (is_isr == 0) {
         panic_log("Kernel panic: ");
         vprintf(message, args);
@@ -66,7 +68,6 @@ void __panic(char *file, int line, int is_isr, exception_t *exception, char *mes
         panic_log("In file %s at line %d \n", file, line);
         panic_log("rip: 0x%p\n", rip);
         panic_log("rbp: 0x%p\n", rbp);
-        panic_log("\n");
         panic_log("Stacktrace:\n");
         for (;;) {
             size_t old_rbp = rbp[0];

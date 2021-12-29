@@ -106,7 +106,7 @@ const char *mmap_get_entry_type(uint32_t type) {
     }
 }
 
-void *pmm_find_first_free_page(size_t count) {
+static void *pmm_inner_alloc(size_t count) {
     if (count == 0)
         return NULL;
 
@@ -124,7 +124,7 @@ void *pmm_alloc(size_t count) {
     if (pmm_info.used_pages <= 0)
         return NULL;
 
-    void *pointer = pmm_find_first_free_page(count);
+    void *pointer = pmm_inner_alloc(count);
 
     if (pointer == NULL)
         return NULL;

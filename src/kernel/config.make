@@ -14,8 +14,7 @@ $(KERNEL): $(KERNEL_OBJ) $(KERNEL_ASMOBJ)
 	@$(LD) $(KERNEL_OBJ) $(KERNEL_ASMOBJ) $(LDFLAGS) $(LDHARDFLAGS) -T$(SRCDIR)/kernel/linker.ld -o $@
 	@python $(SRCDIR)/gensym.py $(KERNEL)
 
--include $(KERNEL_DEPS)
--include $(KERNEL_ASMDEPS)
+-include $(KERNEL_DEPS) $(KERNEL_ASMDEPS)
 
 $(BUILDDIR)/kernel/%.o: $(SRCDIR)/kernel/%.c
 	@echo "[CC]\t\t$(<:$(SRCDIR)/%=%)"

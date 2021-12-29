@@ -3,20 +3,18 @@ OUTPUT_ARCH(i386:x86-64)
 
 ENTRY(_start)
 
-PHDRS
-{
+PHDRS {
     null    PT_NULL    FLAGS(0) ;
     text    PT_LOAD    FLAGS((1 << 0) | (1 << 2)) ;
     rodata  PT_LOAD    FLAGS((1 << 2)) ;
     data    PT_LOAD    FLAGS((1 << 1) | (1 << 2)) ;
 }
 
-SECTIONS
-{
+SECTIONS {
     . = 0xffffffff80000000;
 
     .text : {
-        *(.text*)
+        *(.text)
     } :text
 
     . += CONSTANT(MAXPAGESIZE);
@@ -26,17 +24,27 @@ SECTIONS
     } :rodata
 
     .rodata : {
-        *(.rodata*)
+        *(.rodata)
     } :rodata
 
     . += CONSTANT(MAXPAGESIZE);
 
     .data : {
-        *(.data*)
+        *(.data)
     } :data
 
     .bss : {
         *(COMMON)
-        *(.bss*)
+        *(.bss)
     } :data
+
+	/DISCARD/ : {
+		*(.comment)
+		*(.note.GNU-stack)
+		*(.eh_frame)
+		*(.rela.eh_frame)
+		*(.shstrtab)
+		*(.symtab)
+		*(.strtab)
+	}
 }
