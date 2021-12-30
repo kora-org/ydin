@@ -10,18 +10,20 @@ KERNEL_ASMDEPS := $(patsubst $(SRCDIR)/%, $(BUILDDIR)/%, $(KERNEL_ASMFILES:.s=.s
 kernel: $(KERNEL)
 
 $(KERNEL): $(KERNEL_OBJ) $(KERNEL_ASMOBJ)
-	@echo "[LD]\t\t$(@:$(BUILDDIR)/kernel/%=%)"
+	@echo -e "[LD]\t\t$(@:$(BUILDDIR)/kernel/%=%)"
 	@$(LD) $(KERNEL_OBJ) $(KERNEL_ASMOBJ) $(LDFLAGS) $(LDHARDFLAGS) -T$(SRCDIR)/kernel/linker.ld -o $@
 	@python $(SRCDIR)/gensym.py $(KERNEL)
+	@$(CC) $(CFLAGS) $(CHARDFLAGS) -c $(SRCDIR)/kernel/misc/symbols.c -o $(BUILDDIR)/kernel/misc/symbols.o
+	@$(LD) $(KERNEL_OBJ) $(KERNEL_ASMOBJ) $(LDFLAGS) $(LDHARDFLAGS) -T$(SRCDIR)/kernel/linker.ld -o $@
 
 -include $(KERNEL_DEPS) $(KERNEL_ASMDEPS)
 
 $(BUILDDIR)/kernel/%.o: $(SRCDIR)/kernel/%.c
-	@echo "[CC]\t\t$(<:$(SRCDIR)/%=%)"
+	@echo -e "[CC]\t\t$(<:$(SRCDIR)/%=%)"
 	@$(CC) $(CFLAGS) $(CHARDFLAGS) -c $< -o $@
 
 $(BUILDDIR)/kernel/%.s.o: $(SRCDIR)/kernel/%.s
-	@echo "[AS]\t\t$(<:$(SRCDIR)/%=%)"
+	@echo -e "[AS]\t\t$(<:$(SRCDIR)/%=%)"
 	@$(AS) -felf64 -g -Fdwarf -MD -MP $< -o $@
 
 clean-kernel:

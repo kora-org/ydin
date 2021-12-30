@@ -1,3 +1,5 @@
+SHELL = bash
+
 SRCDIR = src
 BUILDDIR = build
 EXTERNALDIR = external
@@ -16,11 +18,9 @@ ifeq ($(TAG:v%=%),)
 endif
 
 ISO = $(BUILDDIR)/faruos.iso
+TOOLCHAIN = llvm
 
-CC = clang -target x86_64-none-elf
 AS = nasm
-LD = ld.lld
-AR = llvm-ar
 QEMU = qemu-system-x86_64
 
 CFLAGS ?= -Og -gdwarf -pipe
@@ -48,19 +48,20 @@ CHARDFLAGS := \
 	-D__faruos_date__='"$(DATE)"'
 
 .DEFAULT_GOAL: all
-.PHONY: all koete kernel clean clean-koete clean-kernel
+.PHONY: all toolchain koete kernel clean clean-toolchain clean-koete clean-kernel
 
-all: mkbuilddir $(ISO)
+all: toolchain mkbuilddir $(ISO)
 
 mkbuilddir:
 	@mkdir -p $(patsubst $(SRCDIR)/%, $(BUILDDIR)/%, $(shell find $(SRCDIR)/koete -type d))
 	@mkdir -p $(patsubst $(SRCDIR)/%, $(BUILDDIR)/%, $(shell find $(SRCDIR)/kernel -type d))
 
+include make/toolchain/$(TOOLCHAIN)/config.make
 include $(SRCDIR)/koete/config.make
 include $(SRCDIR)/kernel/config.make
 
 run: all
-	@echo "[QEMU]\t\t$(ISO:$(BUILDDIR)/%=%)"
+	@echo -e "[QEMU]\t\t$(ISO:$(BUILDDIR)/%=%)"
 	@$(QEMU) -m $(QEMUMEMSIZE) -no-reboot -no-shutdown $(QEMUFLAGS) -cdrom $(ISO)
 
 limine:
@@ -71,13 +72,13 @@ $(ISO): limine koete kernel
 	@cp -r $(SRCDIR)/sysroot $(BUILDDIR)/sysroot
 	@cp $(BUILDDIR)/kernel/kernel.elf $(EXTERNALDIR)/limine/limine.sys $(BUILDDIR)/sysroot/boot
 	@cp $(EXTERNALDIR)/limine/limine-cd.bin $(EXTERNALDIR)/limine/limine-eltorito-efi.bin $(BUILDDIR)/sysroot
-	@echo "[XORRISO]\t$(@:$(BUILDDIR)/%=%)"
+	@echo -e "[XORRISO]\t$(@:$(BUILDDIR)/%=%)"
 	@xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot limine-eltorito-efi.bin \
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
 		$(BUILDDIR)/sysroot -o $(ISO) >/dev/null 2>&1
-	@echo "[LIMINE]\t$(@:$(BUILDDIR)/%=%)"
+	@echo -e "[LIMINE]\t$(@:$(BUILDDIR)/%=%)"
 	@external/limine/limine-install $(ISO) >/dev/null 2>&1
 
 clean: clean-kernel clean-koete

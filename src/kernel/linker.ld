@@ -37,14 +37,4 @@ SECTIONS {
         *(COMMON)
         *(.bss)
     } :data
-
-	/DISCARD/ : {
-		*(.comment)
-		*(.note.GNU-stack)
-		*(.eh_frame)
-		*(.rela.eh_frame)
-		*(.shstrtab)
-		*(.symtab)
-		*(.strtab)
-	}
 }

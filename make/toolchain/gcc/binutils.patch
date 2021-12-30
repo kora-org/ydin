@@ -1,0 +1,103 @@
+diff '--color=auto' -uNr binutils-2.37/config.sub binutils-2.37.faruos/config.sub
+--- binutils-2.37/config.sub	2021-07-08 18:37:19.000000000 +0700
++++ binutils-2.37.faruos/config.sub	2021-12-30 11:44:28.933135877 +0700
+@@ -1729,7 +1729,8 @@
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+-	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx*)
++	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* \
++	     | faruos*)
+ 		;;
+ 	# This one is extra strict with allowed versions
+ 	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
+diff '--color=auto' -uNr binutils-2.37/bfd/config.bfd binutils-2.37.faruos/bfd/config.bfd
+--- binutils-2.37/bfd/config.bfd	2021-07-08 18:37:19.000000000 +0700
++++ binutils-2.37.faruos/bfd/config.bfd	2021-12-30 11:46:33.353135884 +0700
+@@ -601,6 +601,18 @@
+     targ_selvecs=iamcu_elf32_vec
+     targ64_selvecs="x86_64_elf64_vec l1om_elf64_vec k1om_elf64_vec"
+     ;;
++  i[3-7]86-*-faruos*)
++    targ_defvec=i386_elf32_vec
++    targ_selvecs=
++    targ64_selvecs=x86_64_elf64_vec
++    ;;
++#ifdef BFD64
++  x86_64-*-faruos*)
++    targ_defvec=x86_64_elf64_vec
++    targ_selvecs=i386_elf32_vec
++    want64=true
++    ;;
++#endif
+   i[3-7]86-*-freebsd* | i[3-7]86-*-kfreebsd*-gnu)
+     targ_defvec=i386_elf32_fbsd_vec
+     targ_selvecs="i386_elf32_vec iamcu_elf32_vec i386_pei_vec i386_coff_vec"
+diff '--color=auto' -uNr binutils-2.37/gas/configure.tgt binutils-2.37.faruos/gas/configure.tgt
+--- binutils-2.37/gas/configure.tgt	2021-07-08 18:37:19.000000000 +0700
++++ binutils-2.37.faruos/gas/configure.tgt	2021-12-30 11:47:29.937135888 +0700
+@@ -236,6 +236,7 @@
+   i386-*-lynxos*)			fmt=elf em=lynx ;;
+   i386-*-redox*)			fmt=elf ;;
+   i386-*-solaris*)			fmt=elf em=solaris ;;
++  i386-*-faruos*)			fmt=elf ;;
+   i386-*-freebsd* \
+   | i386-*-kfreebsd*-gnu)		fmt=elf em=freebsd ;;
+   i386-*-msdosdjgpp* \
+diff '--color=auto' -uNr binutils-2.37/ld/Makefile.am binutils-2.37.faruos/ld/Makefile.am
+--- binutils-2.37/ld/Makefile.am	2021-07-08 18:37:20.000000000 +0700
++++ binutils-2.37.faruos/ld/Makefile.am	2021-12-30 11:58:19.641135926 +0700
+@@ -278,6 +278,7 @@
+ 	eelf32z80.c \
+ 	eelf_i386.c \
+ 	eelf_i386_be.c \
++	eelf_i386_faruos.c \
+ 	eelf_i386_fbsd.c \
+ 	eelf_i386_ldso.c \
+ 	eelf_i386_sol2.c \
+@@ -454,6 +455,7 @@
+ 	eelf_k1om_fbsd.c \
+ 	eelf_x86_64.c \
+ 	eelf_x86_64_cloudabi.c \
++	eelf_x86_64_faruos.c \
+ 	eelf_x86_64_fbsd.c \
+ 	eelf_x86_64_sol2.c \
+ 	ehppa64linux.c \
+diff '--color=auto' -uNr binutils-2.37/ld/configure.tgt binutils-2.37.faruos/ld/configure.tgt
+--- binutils-2.37/ld/configure.tgt	2021-07-08 18:37:20.000000000 +0700
++++ binutils-2.37.faruos/ld/configure.tgt	2021-12-30 11:51:47.861135903 +0700
+@@ -360,6 +360,11 @@
+ i[3-7]86-*-dragonfly*)	targ_emul=elf_i386
+ 			targ_extra_emuls="elf_iamcu i386bsd"
+ 			;;
++i[3-7]86-*-faruos*)
++			targ_emul=elf_i386_faruos
++			targ_extra_emuls=elf_i386
++			targ64_extra_emuls="elf_x86_64_faruos elf_x86_64"
++			;;
+ i[3-7]86-*-freebsd* | i[3-7]86-*-kfreebsd*-gnu)
+ 			targ_emul=elf_i386_fbsd
+ 			targ_extra_emuls="elf_i386 elf_iamcu i386bsd"
+@@ -977,6 +982,10 @@
+ x86_64-*-dragonfly*)	targ_emul=elf_x86_64
+ 			targ_extra_emuls="elf_i386 elf_iamcu elf_l1om elf_k1om"
+ 			;;
++x86_64-*-faruos*)
++			targ_emul=elf_x86_64_faruos
++			targ_extra_emuls="elf_i386_faruos elf_x86_64 elf_i386"
++			;;
+ x86_64-*-freebsd* | x86_64-*-kfreebsd*-gnu)
+ 			targ_emul=elf_x86_64_fbsd
+ 			targ_extra_emuls="elf_i386_fbsd elf_x86_64 elf_i386 elf_iamcu elf_l1om elf_l1om_fbsd elf_k1om elf_k1om_fbsd"
+diff '--color=auto' -uNr binutils-2.37/ld/emulparams/elf_i386_faruos.sh binutils-2.37.faruos/ld/emulparams/elf_i386_faruos.sh
+--- binutils-2.37/ld/emulparams/elf_i386_faruos.sh	1970-01-01 07:00:00.000000000 +0700
++++ binutils-2.37.faruos/ld/emulparams/elf_i386_faruos.sh	2021-12-30 11:54:01.201135911 +0700
+@@ -0,0 +1,3 @@
++. ${srcdir}/emulparams/elf_i386.sh
++GENERATE_SHLIB_SCRIPT=yes
++GENERATE_PIE_SCRIPT=yes
+diff '--color=auto' -uNr binutils-2.37/ld/emulparams/elf_x86_64_faruos.sh binutils-2.37.faruos/ld/emulparams/elf_x86_64_faruos.sh
+--- binutils-2.37/ld/emulparams/elf_x86_64_faruos.sh	1970-01-01 07:00:00.000000000 +0700
++++ binutils-2.37.faruos/ld/emulparams/elf_x86_64_faruos.sh	2021-12-30 11:54:34.249135913 +0700
+@@ -0,0 +1,1 @@
++. ${srcdir}/emulparams/elf_x86_64.sh
