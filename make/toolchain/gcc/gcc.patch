@@ -1,13 +1,12 @@
 diff '--color=auto' -uNr gcc-11.2.0/config.sub gcc-11.2.0.faruos/config.sub
 --- gcc-11.2.0/config.sub	2021-07-28 13:55:06.620278039 +0700
 +++ gcc-11.2.0.faruos/config.sub	2021-12-30 12:27:15.837136030 +0700
-@@ -1725,7 +1725,8 @@
+@@ -1725,7 +1725,7 @@
  	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
  	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
  	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
 -	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx*)
-+	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* \
-+	     | faruos*)
++	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | faruos*)
  		;;
  	# This one is extra strict with allowed versions
  	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
@@ -56,31 +55,24 @@ diff '--color=auto' -uNr gcc-11.2.0/gcc/config.gcc gcc-11.2.0.faruos/gcc/config.
  *-*-freebsd*)
    # This is the generic ELF configuration of FreeBSD.  Later
    # machine-specific sections may refine and add to this
-@@ -1917,6 +1923,13 @@
+@@ -1917,6 +1923,10 @@
  	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h dragonfly.h dragonfly-stdint.h i386/x86-64.h i386/dragonfly.h"
  	tmake_file="${tmake_file} i386/t-crtstuff"
  	;;
-+i[34567]86-*-faruos*)
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h faruos.h"
-+    ;;
 +x86_64-*-faruos*)
 +	tmake_file="${tmake_file} i386/t-x86_64-faruos"
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h faruos.h"
-+    ;;
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h faruos.h"
++	;;
  i[34567]86-*-freebsd*)
  	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h ${fbsd_tm_file} i386/freebsd.h"
  	;;
 diff '--color=auto' -uNr gcc-11.2.0/libgcc/config.host gcc-11.2.0.faruos/libgcc/config.host
 --- gcc-11.2.0/libgcc/config.host	2021-07-28 13:55:08.752307785 +0700
 +++ gcc-11.2.0.faruos/libgcc/config.host	2021-12-30 12:36:26.613136063 +0700
-@@ -222,6 +222,14 @@
+@@ -222,6 +222,10 @@
    tmake_file="$tmake_file t-slibgcc t-slibgcc-gld t-slibgcc-elf-ver"
    extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o"
    ;;
-+i[34567]86-*-faruos*)
-+  extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
-+  tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
-+  ;;
 +x86_64-*-faruos*)
 +  extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
 +  tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"

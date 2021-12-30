@@ -1,8 +1,8 @@
 SHELL = bash
 
-SRCDIR = src
-BUILDDIR = build
-EXTERNALDIR = external
+SRCDIR = $(CURDIR)/src
+BUILDDIR = $(CURDIR)/build
+EXTERNALDIR = $(CURDIR)/external
 
 BRANCH := $(shell git branch --show-current)
 TAGCOMMIT := $(shell git rev-list --abbrev-commit --tags --max-count=1)

@@ -1,7 +1,7 @@
 TOOLCHAIN_BUILDDIR = $(BUILDDIR)/toolchain/build
 TOOLCHAIN_PREFIXDIR = $(BUILDDIR)/toolchain/local
 
-TOOLCHAIN_TARGET_TRIPLE = x86_64-unknown-none-faruos
+TOOLCHAIN_TARGET_TRIPLE = x86_64-unknown-faruos
 TOOLCHAIN_PREFIX = $(TOOLCHAIN_PREFIXDIR)/bin/$(TOOLCHAIN_TARGET_TRIPLE)-
 
 CC = $(TOOLCHAIN_PREFIX)gcc
@@ -20,9 +20,9 @@ GCC_URL = https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/$(GCC_FILE)
 
 toolchain: mktoolchaindir \
 	$(TOOLCHAIN_BUILDDIR)/binutils/src $(TOOLCHAIN_BUILDDIR)/gcc/src \
-	binutils-configure gcc-configure \
-	binutils-build gcc-build \
-	binutils-install gcc-install
+	$(TOOLCHAIN_BUILDDIR)/binutils/build/Makefile $(TOOLCHAIN_BUILDDIR)/binutils/.built \
+	#$(TOOLCHAIN_BUILDDIR)/gcc/build/Makefile $(TOOLCHAIN_BUILDDIR)/gcc/.built \
+	#$(LD) $(CC)
 
 clean-toolchain:
 	@rm -rf $(BUILDDIR)/toolchain
@@ -48,38 +48,42 @@ $(TOOLCHAIN_BUILDDIR)/binutils/src: $(TOOLCHAIN_BUILDDIR)/$(BINUTILS_FILE)
 	@mkdir -p $(TOOLCHAIN_BUILDDIR)/binutils/{build,src} || true
 	@echo -e "[TOOLCHAIN]\tExtracting Binutils tarball"
 	@tar xJf $< -C $(TOOLCHAIN_BUILDDIR)/binutils/src --strip-components=1
+	@patch -p1 --dir $(TOOLCHAIN_BUILDDIR)/binutils/src < make/toolchain/gcc/binutils.patch > /dev/null
 
 $(TOOLCHAIN_BUILDDIR)/gcc/src: $(TOOLCHAIN_BUILDDIR)/$(GCC_FILE)
 	@mkdir -p $(TOOLCHAIN_BUILDDIR)/gcc/{build,src} || true
 	@echo -e "[TOOLCHAIN]\tExtracting GCC tarball"
 	@tar xJf $< -C $(TOOLCHAIN_BUILDDIR)/gcc/src --strip-components=1
+	@patch -p1 --dir $(TOOLCHAIN_BUILDDIR)/gcc/src < make/toolchain/gcc/gcc.patch > /dev/null
 
-binutils-configure: $(TOOLCHAIN_BUILDDIR)/binutils/src
+$(TOOLCHAIN_BUILDDIR)/binutils/build/Makefile: $(TOOLCHAIN_BUILDDIR)/binutils/src
 	@echo -e "[TOOLCHAIN]\tConfiguring Binutils"
 	@cd $(TOOLCHAIN_BUILDDIR)/binutils/build && ../src/configure \
 		--target $(TOOLCHAIN_TARGET_TRIPLE) --prefix $(TOOLCHAIN_PREFIXDIR) \
 		--with-sysroot --disable-nls --disable-werror
 
-gcc-configure: binutils-configure $(TOOLCHAIN_BUILDDIR)/gcc/src
+$(TOOLCHAIN_BUILDDIR)/gcc/build/Makefile: $(TOOLCHAIN_BUILDDIR)/binutils/build/Makefile $(TOOLCHAIN_BUILDDIR)/gcc/src
 	@echo -e "[TOOLCHAIN]\tConfiguring GCC"
 	@cd $(TOOLCHAIN_BUILDDIR)/gcc/build && ../src/configure \
 		--target $(TOOLCHAIN_TARGET_TRIPLE) --prefix $(TOOLCHAIN_PREFIXDIR) \
 		--disable-nls --enable-languages=c,c++ --without-headers
 
-binutils-build: binutils-configure
+$(TOOLCHAIN_BUILDDIR)/binutils/.built: $(TOOLCHAIN_BUILDDIR)/binutils/build/Makefile
 	@echo -e "[TOOLCHAIN]\tBuilding Binutils"
-	@cd $(TOOLCHAIN_BUILDDIR)/binutils/build && $(MAKE)
+	@touch $(TOOLCHAIN_BUILDDIR)/binutils/.built
+	+@cd $(TOOLCHAIN_BUILDDIR)/binutils/build && $(MAKE)
 
-gcc-build: binutils-build gcc-configure
+$(TOOLCHAIN_BUILDDIR)/gcc/.built: $(TOOLCHAIN_BUILDDIR)/binutils/.built $(TOOLCHAIN_BUILDDIR)/gcc/build/Makefile
 	@echo -e "[TOOLCHAIN]\tBuilding GCC"
-	@cd $(TOOLCHAIN_BUILDDIR)/gcc/build && $(MAKE) \
+	@touch $(TOOLCHAIN_BUILDDIR)/gcc/.built
+	+@cd $(TOOLCHAIN_BUILDDIR)/gcc/build && $(MAKE) \
 		all-gcc target-libgcc all-target-libstdc++-v3
 
-binutils-install: binutils-build
+$(LD): $(TOOLCHAIN_BUILDDIR)/binutils/.built
 	@echo -e "[TOOLCHAIN]\tInstalling Binutils"
 	@cd $(TOOLCHAIN_BUILDDIR)/binutils/build && $(MAKE) install
 
-gcc-install: gcc-build
+$(CC): $(TOOLCHAIN_BUILDDIR)/gcc/.built
 	@echo -e "[TOOLCHAIN]\tInstalling GCC"
 	@cd $(TOOLCHAIN_BUILDDIR)/gcc/build && $(MAKE) \
 		install-gcc install-libgcc install-libstdc++-v3
