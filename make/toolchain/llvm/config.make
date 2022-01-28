@@ -6,5 +6,7 @@ LD = ld.lld
 AR = $(PREFIX)ar
 OBJCOPY = $(PREFIX)objcopy
 
+LDFLAGS += -L$(CURDIR)/make/toolchain/llvm -lgcc
+
 toolchain:
 clean-toolchain:

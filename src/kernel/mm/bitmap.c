@@ -1,5 +1,7 @@
 /*
- * Copyright © 2021 Leap of Azzam
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * Copyright © 2022 Leap of Azzam
  *
  * This file is part of FaruOS.
  *

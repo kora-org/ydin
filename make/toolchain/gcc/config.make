@@ -9,6 +9,8 @@ LD = $(TOOLCHAIN_PREFIX)ld
 AR = $(TOOLCHAIN_PREFIX)ar
 OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 
+LDFLAGS += -L$(TOOLCHAIN_PREFIXDIR)/lib -lgcc
+
 BINUTILS_VERSION = 2.37
 BINUTILS_SHA256 = 820d9724f020a3e69cb337893a0b63c2db161dadcb0e06fc11dc29eb1e84a32c
 BINUTILS_FILE = binutils-$(BINUTILS_VERSION).tar.xz
@@ -64,6 +66,7 @@ $(TOOLCHAIN_BUILDDIR)/binutils/build/Makefile: $(TOOLCHAIN_BUILDDIR)/binutils/sr
 
 $(TOOLCHAIN_BUILDDIR)/gcc/build/Makefile: $(TOOLCHAIN_BUILDDIR)/binutils/build/Makefile $(TOOLCHAIN_BUILDDIR)/gcc/src
 	@echo -e "[TOOLCHAIN]\tConfiguring GCC"
+	@cd $(TOOLCHAIN_BUILDDIR)/gcc/src && ../src/contrib/download_prerequisites
 	@cd $(TOOLCHAIN_BUILDDIR)/gcc/build && ../src/configure \
 		--target $(TOOLCHAIN_TARGET_TRIPLE) --prefix $(TOOLCHAIN_PREFIXDIR) \
 		--disable-nls --enable-languages=c,c++ --without-headers
@@ -81,9 +84,9 @@ $(TOOLCHAIN_BUILDDIR)/gcc/.built: $(TOOLCHAIN_BUILDDIR)/binutils/.built $(TOOLCH
 
 $(LD): $(TOOLCHAIN_BUILDDIR)/binutils/.built
 	@echo -e "[TOOLCHAIN]\tInstalling Binutils"
-	@cd $(TOOLCHAIN_BUILDDIR)/binutils/build && $(MAKE) install
+	+@cd $(TOOLCHAIN_BUILDDIR)/binutils/build && $(MAKE) install
 
 $(CC): $(TOOLCHAIN_BUILDDIR)/gcc/.built
 	@echo -e "[TOOLCHAIN]\tInstalling GCC"
-	@cd $(TOOLCHAIN_BUILDDIR)/gcc/build && $(MAKE) \
+	+@cd $(TOOLCHAIN_BUILDDIR)/gcc/build && $(MAKE) \
 		install-gcc install-libgcc install-libstdc++-v3
