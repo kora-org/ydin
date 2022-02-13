@@ -41,6 +41,7 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
     struct stivale2_struct_tag_pmrs *pmr_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_PMRS_ID);
     struct stivale2_pmr *pmrs = pmr_tag->pmrs;
     root_page_directory = vmm_create_page_directory();
+    log("created page");
 
     if (check_la57()) {
         is_la57_enabled = 1;
@@ -58,8 +59,9 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
     }
 
     // 2/4: map 2 GB of kernel data
-    for (uint64_t i = 0; i < 2 * GB; i += PAGE_SIZE)
+    for (uint64_t i = 0; i < 2 * GB; i += PAGE_SIZE) {
         vmm_map_page(root_page_directory, i, i + KERNEL_DATA_OFFSET, PTE_PRESENT | PTE_READ_WRITE);
+    }
 
     // 3/4: map 2 GB of kernel code
     for (uint64_t i = 0; i < 2 * GB; i += PAGE_SIZE)
@@ -89,37 +91,41 @@ static uint64_t *vmm_get_next_level(uint64_t *page_map_level, uintptr_t index, i
         page_map_level[index] = (uint64_t)pmm_alloc_zero(1) | flags;
         return (uint64_t *)(page_map_level[index] & ~(0x1FF));
     }
+
     return NULL;
 }
 
 void vmm_map_page(uint64_t *current_page_directory, uintptr_t physical_address, uintptr_t virtual_address, int flags) {
-    if (is_la57_enabled) {
-        uintptr_t index5 = (virtual_address & ((uintptr_t)0x1FF << 48)) >> 48;
-        uintptr_t index4 = (virtual_address & ((uintptr_t)0x1FF << 39)) >> 39;
-        uintptr_t index3 = (virtual_address & ((uintptr_t)0x1FF << 30)) >> 30;
-        uintptr_t index2 = (virtual_address & ((uintptr_t)0x1FF << 21)) >> 21;
-        uintptr_t index1 = (virtual_address & ((uintptr_t)0x1FF << 12)) >> 12;
+    if (is_la57_enabled)
+        goto la57;
 
-        uint64_t *page_map_level5 = current_page_directory;
-        uint64_t *page_map_level4 = vmm_get_next_level(page_map_level5, index5, flags);
-        uint64_t *page_map_level3 = vmm_get_next_level(page_map_level4, index4, flags);
-        uint64_t *page_map_level2 = vmm_get_next_level(page_map_level3, index3, flags);
-        uint64_t *page_map_level1 = vmm_get_next_level(page_map_level2, index2, flags);
+    uintptr_t index5 = (virtual_address & ((uintptr_t)0x1FF << 48)) >> 48;
+    uintptr_t index4 = (virtual_address & ((uintptr_t)0x1FF << 39)) >> 39;
+    uintptr_t index3 = (virtual_address & ((uintptr_t)0x1FF << 30)) >> 30;
+    uintptr_t index2 = (virtual_address & ((uintptr_t)0x1FF << 21)) >> 21;
+    uintptr_t index1 = (virtual_address & ((uintptr_t)0x1FF << 12)) >> 12;
 
-        page_map_level1[index1] = physical_address | flags; 
-    } else {
-        uintptr_t index4 = (virtual_address & ((uintptr_t)0x1FF << 39)) >> 39;
-        uintptr_t index3 = (virtual_address & ((uintptr_t)0x1FF << 30)) >> 30;
-        uintptr_t index2 = (virtual_address & ((uintptr_t)0x1FF << 21)) >> 21;
-        uintptr_t index1 = (virtual_address & ((uintptr_t)0x1FF << 12)) >> 12;
+    uint64_t *page_map_level5 = current_page_directory;
+    uint64_t *page_map_level4 = vmm_get_next_level(page_map_level5, index5, flags);
+    uint64_t *page_map_level3 = vmm_get_next_level(page_map_level4, index4, flags);
+    uint64_t *page_map_level2 = vmm_get_next_level(page_map_level3, index3, flags);
+    uint64_t *page_map_level1 = vmm_get_next_level(page_map_level2, index2, flags);
 
-        uint64_t *page_map_level4 = current_page_directory;
-        uint64_t *page_map_level3 = vmm_get_next_level(page_map_level4, index4, flags);
-        uint64_t *page_map_level2 = vmm_get_next_level(page_map_level3, index3, flags);
-        uint64_t *page_map_level1 = vmm_get_next_level(page_map_level2, index2, flags);
+    page_map_level1[index1] = physical_address | flags;
 
-        page_map_level1[index1] = physical_address | flags; 
-    }
+la57: {
+    uintptr_t index4 = (virtual_address & ((uintptr_t)0x1FF << 39)) >> 39;
+    uintptr_t index3 = (virtual_address & ((uintptr_t)0x1FF << 30)) >> 30;
+    uintptr_t index2 = (virtual_address & ((uintptr_t)0x1FF << 21)) >> 21;
+    uintptr_t index1 = (virtual_address & ((uintptr_t)0x1FF << 12)) >> 12;
+
+    uint64_t *page_map_level4 = current_page_directory;
+    uint64_t *page_map_level3 = vmm_get_next_level(page_map_level4, index4, flags);
+    uint64_t *page_map_level2 = vmm_get_next_level(page_map_level3, index3, flags);
+    uint64_t *page_map_level1 = vmm_get_next_level(page_map_level2, index2, flags);
+
+    page_map_level1[index1] = physical_address | flags;
+}
 
     vmm_flush_tlb(virtual_address);
 }

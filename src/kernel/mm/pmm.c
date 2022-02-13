@@ -27,7 +27,7 @@
 #include <kernel/kernel.h>
 
 struct pmm pmm_info;
-bitmap_t *bitmap;
+uint8_t *bitmap;
 size_t highest_page;
 
 void pmm_init(struct stivale2_struct *stivale2_struct) {
@@ -62,23 +62,21 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
 
     size_t bitmap_size = ALIGN_UP((highest_page / PAGE_SIZE) / 8, PAGE_SIZE);
 
-    bitmap->size = bitmap_size;
-
     log("Memory specifications:\n");
     current_entry = &pmm_info.memory_map->memmap[0];
     log("Total amount of used memory: %d kB\n", (current_entry->base + current_entry->length - 1) / 1024);
-    log("Bitmap size: %d kB\n", bitmap->size / 1024);
+    log("Bitmap size: %d kB\n", bitmap_size / 1024);
 
     for (uint64_t i = 0; i < pmm_info.memory_map->entries; i++) {
         current_entry = &pmm_info.memory_map->memmap[i];
 
-        if (current_entry->type == STIVALE2_MMAP_USABLE && current_entry->length >= bitmap->size) {
-            bitmap->map = (uint8_t *)(current_entry->base + KERNEL_DATA_OFFSET);
+        if (current_entry->type == STIVALE2_MMAP_USABLE && current_entry->length >= bitmap_size) {
+            bitmap = (uint8_t *)(current_entry->base + KERNEL_DATA_OFFSET);
 
-            memset((void *)bitmap->map, 0xFF, bitmap->size);
+            memset((void *)bitmap, 0xFF, bitmap_size);
 
-            current_entry->base += bitmap->size;
-            current_entry->length -= bitmap->size;
+            current_entry->base += bitmap_size;
+            current_entry->length -= bitmap_size;
 
             break;
         }
