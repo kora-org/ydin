@@ -37,11 +37,13 @@ LDHARDFLAGS := \
 CHARDFLAGS := \
 	-I$(SRCDIR)/include \
 	-I$(EXTERNALDIR)/stivale \
+	-Wno-sequence-point \
 	-nostdlib -std=gnu11 \
 	-ffreestanding -fno-pic \
 	-fno-stack-protector \
 	-fsanitize=undefined \
 	-mcmodel=kernel -MMD -MP \
+	-mno-80387 -mno-sse -mno-sse2 \
 	-mno-red-zone -D__faruos__ \
 	-D__faruos_version__='"$(VERSION)"' \
 	-D__faruos_build__='"$(COMMIT)"' \
