@@ -23,29 +23,29 @@
 #include <kernel/pic.h>
 
 void pic_remap(void) {
-    uint8_t mask1 = inb(0x21);
-    uint8_t mask2 = inb(0xA1);
-    outb(0x20, 0x11);
-    outb(0xA0, 0x11);
+    uint8_t mask1 = io_inb(0x21);
+    uint8_t mask2 = io_inb(0xA1);
+    io_outb(0x20, 0x11);
+    io_outb(0xA0, 0x11);
     io_wait();
-    outb(0x21, 0x20);
-    outb(0xA1, 0x28);
+    io_outb(0x21, 0x20);
+    io_outb(0xA1, 0x28);
     io_wait();
-    outb(0x21, 0x04);
-    outb(0xA1, 0x02);
+    io_outb(0x21, 0x04);
+    io_outb(0xA1, 0x02);
     io_wait();
-    outb(0x21, 0x01);
-    outb(0xA1, 0x01);
+    io_outb(0x21, 0x01);
+    io_outb(0xA1, 0x01);
     io_wait();
-    outb(0x21, mask1);
-    outb(0xA1, mask2);
+    io_outb(0x21, mask1);
+    io_outb(0xA1, mask2);
 }
 
 void pic_eoi(unsigned char irq) {
     if (irq >= 8)
-        outb(0xA0, 0x20);
+        io_outb(0xA0, 0x20);
  
-    outb(0x20, 0x20);
+    io_outb(0x20, 0x20);
 }
 
 void irq_set_mask(uint8_t irq) {
@@ -58,8 +58,8 @@ void irq_set_mask(uint8_t irq) {
         port = 0xA1;
         irq -= 8;
     }
-    value = inb(port) | (1 << irq);
-    outb(port, value);
+    value = io_inb(port) | (1 << irq);
+    io_outb(port, value);
 }
  
 void irq_clear_mask(uint8_t irq) {
@@ -72,14 +72,14 @@ void irq_clear_mask(uint8_t irq) {
         port = 0xA1;
         irq -= 8;
     }
-    value = inb(port) & ~(1 << irq);
-    outb(port, value);
+    value = io_inb(port) & ~(1 << irq);
+    io_outb(port, value);
 }
 
 static uint16_t __pic_get_irq_reg(int ocw3) {
-    outb(0x20, ocw3);
-    outb(0xA0, ocw3);
-    return (inb(0xA0) << 8) | inb(0x20);
+    io_outb(0x20, ocw3);
+    io_outb(0xA0, ocw3);
+    return (io_inb(0xA0) << 8) | io_inb(0x20);
 }
 
 uint16_t pic_get_irr(void) {

@@ -1,5 +1,7 @@
-// Originally made by Abb1x
-// Modified for use with FaruOS
+/*
+ * Original author: Abb1x
+ * Modified for use with FaruOS
+ */
 
 #include <stdint.h>
 #include <stddef.h>

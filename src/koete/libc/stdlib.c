@@ -59,7 +59,7 @@ char *itoa(int value, char *buffer, int base) {
     return buffer;
 }
 
-int atoi(const char* str) {
+int atoi(const char *str) {
     int sign = 1, base = 0, i = 0;
      
     while (str[i] == ' ') i++;

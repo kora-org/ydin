@@ -24,14 +24,27 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+typedef struct _FILE {
+    uint8_t _can_read, _can_write;
+
+    uint64_t (*seek)(int mode, uint64_t offset);
+    int64_t (*read)(void *arg, void *buffer, uint64_t offset, uint64_t max_count);
+    int64_t (*write)(void *arg, const void *buffer, uint64_t offset, uint64_t max_count);
+    void (*close)(void *arg);
+} FILE;
+
+FILE *stdin;
+FILE *stdout;
+FILE *stderr;
+
 int putc(const char c);
 int putchar(char c);
-int puts(const char* str);
-int printf(const char* format, ...) ;
-int sprintf(char* buffer, const char* format, ...);
-int vsprintf(char* buffer, const char* format, va_list va);
-int snprintf(char* buffer, size_t count, const char* format, ...) ;
-int vsnprintf(char* buffer, size_t count, const char* format, va_list va);
-int vprintf(const char* format, va_list va);
-int fctprintf(void (*out)(char character, void* arg), void* arg, const char* format, ...);
-int vfctprintf(void (*out)(char character, void* arg), void* arg, const char* format, va_list va);
+int puts(const char *str);
+int printf(const char *format, ...) ;
+int sprintf(char *buffer, const char *format, ...);
+int vsprintf(char *buffer, const char *format, va_list va);
+int snprintf(char *buffer, size_t count, const char *format, ...) ;
+int vsnprintf(char *buffer, size_t count, const char *format, va_list va);
+int vprintf(const char *format, va_list va);
+int fctprintf(void (*out)(char character, void *arg), void *arg, const char *format, ...);
+int vfctprintf(void (*out)(char character, void *arg), void *arg, const char *format, va_list va);
