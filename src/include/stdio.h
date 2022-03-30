@@ -33,9 +33,9 @@ typedef struct _FILE {
     void (*close)(void *arg);
 } FILE;
 
-FILE *stdin;
-FILE *stdout;
-FILE *stderr;
+//FILE *stdin;
+//FILE *stdout;
+//FILE *stderr;
 
 int putc(const char c);
 int putchar(char c);

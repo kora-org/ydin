@@ -73,7 +73,7 @@ void pmm_init(struct stivale2_struct *stivale2_struct) {
         if (current_entry->type == STIVALE2_MMAP_USABLE && current_entry->length >= bitmap_size) {
             bitmap = (uint8_t *)(current_entry->base + KERNEL_DATA_OFFSET);
 
-            memset((void *)bitmap, 0xFF, bitmap_size);
+            memset(bitmap, 0xFF, bitmap_size);
 
             current_entry->base += bitmap_size;
             current_entry->length -= bitmap_size;

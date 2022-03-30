@@ -29,6 +29,6 @@ int putchar(char c) {
 
 int puts(const char *str) {
     while (*str)
-        putc(*str++);
+        putchar(*str++);
     return 0;
 }

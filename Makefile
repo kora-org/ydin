@@ -32,18 +32,19 @@ QEMUMEMSIZE ?= 2G
 LDHARDFLAGS := \
 	-nostdlib -static \
 	-L$(BUILDDIR)/koete -lkoete \
-	-zmax-page-size=0x1000
+	-zmax-page-size=0x1000 \
+	--no-dynamic-linker -ztext
 
 CHARDFLAGS := \
 	-I$(SRCDIR)/include \
 	-I$(EXTERNALDIR)/stivale \
 	-Wno-sequence-point \
 	-nostdlib -std=gnu11 \
-	-ffreestanding -fno-pic \
-	-fno-stack-protector \
+	-ffreestanding -fpic \
+	-fno-stack-protector -fpie \
 	-fsanitize=undefined \
 	-mcmodel=kernel -MMD -MP \
-	-mno-80387 -mno-mmx -mno-3dnow
+	-mno-80387 -mno-mmx -mno-3dnow \
 	-mno-sse -mno-sse2 -msoft-float \
 	-mno-red-zone -D__faruos__ \
 	-D__faruos_version__='"$(VERSION)"' \
@@ -74,15 +75,15 @@ $(ISO): limine koete kernel
 	@rm -rf $(BUILDDIR)/sysroot
 	@cp -r $(SRCDIR)/sysroot $(BUILDDIR)/sysroot
 	@cp $(BUILDDIR)/kernel/kernel.elf $(EXTERNALDIR)/limine/limine.sys $(BUILDDIR)/sysroot/boot
-	@cp $(EXTERNALDIR)/limine/limine-cd.bin $(EXTERNALDIR)/limine/limine-eltorito-efi.bin $(BUILDDIR)/sysroot
+	@cp $(EXTERNALDIR)/limine/limine-cd.bin $(EXTERNALDIR)/limine/limine-cd-efi.bin $(BUILDDIR)/sysroot
 	@echo -e "[XORRISO]\t$(@:$(BUILDDIR)/%=%)"
 	@xorriso -as mkisofs -b limine-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
-		--efi-boot limine-eltorito-efi.bin \
+		--efi-boot limine-cd-efi.bin \
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
 		$(BUILDDIR)/sysroot -o $(ISO) >/dev/null 2>&1
 	@echo -e "[LIMINE]\t$(@:$(BUILDDIR)/%=%)"
-	@external/limine/limine-install $(ISO) >/dev/null 2>&1
+	@external/limine/limine-s2deploy $(ISO) >/dev/null 2>&1
 
 clean: clean-kernel clean-koete
 	@$(RM)r $(ISO)

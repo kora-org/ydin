@@ -137,8 +137,10 @@ void _start(struct stivale2_struct *stivale2_struct) {
     pmm_init(stivale2_struct);
     vmm_init(stivale2_struct);
     pic_remap();
-    printf("Hello World!");
-    panic("panic test");
+    printf("Hello World!\n");
+    uint64_t *test = vmm_create_page_dir();
+    printf("my vmm page: 0x%p\n", test);
+    //panic("panic test");
 
     for (;;) {
         halt();

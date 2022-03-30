@@ -24,8 +24,8 @@
 #include <kernel/pmm.h>
 #include <kernel/vmm.h>
 #include <kernel/kernel.h>
+#include <kernel/panic.h>
 
-static uint64_t *root_page_dir;
 static uint8_t is_la57_enabled = 0;
 
 static uint8_t check_la57(void) {
@@ -40,7 +40,11 @@ void vmm_init(struct stivale2_struct *stivale2_struct) {
     struct stivale2_struct_tag_memmap *memory_map = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_MEMMAP_ID);
     struct stivale2_struct_tag_pmrs *pmr_tag = stivale2_get_tag(stivale2_struct, STIVALE2_STRUCT_TAG_PMRS_ID);
     struct stivale2_pmr *pmrs = pmr_tag->pmrs;
-    root_page_dir = vmm_create_page_dir();
+
+    uint64_t *root_page_dir = vmm_create_page_dir();
+    /*if (root_page_dir == NULL) {
+        panic("VMM page dir isn't properly allocated");
+    }*/
 
     if (check_la57()) {
         is_la57_enabled = 1;
