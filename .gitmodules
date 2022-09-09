@@ -1,7 +1,0 @@
-[submodule "external/limine"]
-	path = external/limine
-	url = https://github.com/limine-bootloader/limine.git
-	branch = latest-binary
-[submodule "external/stivale"]
-	path = external/stivale
-	url = https://github.com/stivale/stivale

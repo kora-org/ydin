@@ -1,0 +1,9 @@
+id: g21h3p2d4crolfmi7zbrk5ptelcqvk00j051ta4xpj6lcwpi
+name: faruos
+license: MIT
+description: A simple Unix-like operating system written in Zig
+root_dependencies:
+  - src: git https://github.com/leapofazzam123/limine
+  - src: git https://github.com/limine-bootloader/limine branch-v3.0-binary
+    id: limine
+    keep: true

@@ -1,5 +1,4 @@
-build/
-*.elf
-*.iso
-*.o
-tags*
+.zigmod
+zig-cache
+zig-out
+deps.zig
