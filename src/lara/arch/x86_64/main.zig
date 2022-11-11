@@ -3,25 +3,45 @@ const limine = @import("limine");
 const arch = @import("arch");
 const lara = @import("../../main.zig");
 const writer = @import("../../writer.zig");
+pub const panic = @import("panic.zig").panic;
 
-pub export var terminal_request: limine.Terminal.Request = .{};
-pub var terminal_response: limine.Terminal.Response = undefined;
+pub export var framebuffer_request: limine.Framebuffer.Request = .{};
+pub var framebuffer_response: limine.Framebuffer.Response = undefined;
 
-pub fn log(comptime message_level: std.log.Level, comptime scope: @Type(.EnumLiteral), comptime format: []const u8, args: anytype) void {
-    const level_txt = comptime message_level.asText();
-    const prefix2 = if (scope == .default) ": " else "(" ++ @tagName(scope) ++ "): ";
-    writer.print(level_txt ++ prefix2 ++ format ++ "\n", args) catch unreachable;
+pub fn log(comptime level: std.log.Level, comptime scope: @Type(.EnumLiteral), comptime format: []const u8, args: anytype) void {
+    const scope_prefix = if (scope == .default) "lara" else @tagName(scope);
+    const prefix = "\x1b[32m[" ++ scope_prefix ++ "] " ++ switch (level) {
+        .err => "\x1b[31merror",
+        .warn => "\x1b[33mwarning",
+        .info => "\x1b[36minfo",
+        .debug => "\x1b[90mdebug",
+    } ++ ": \x1b[0m";
+    writer.writer.print(prefix ++ format ++ "\n", args) catch unreachable;
 }
 
 pub export fn _start() callconv(.C) void {
-    if (terminal_request.response) |terminal| {
-        terminal_response = terminal.*;
+    if (framebuffer_request.response) |framebuffer| {
+        framebuffer_response = framebuffer.*;
 
-        if (terminal_response.terminal_count < 1) {
+        if (framebuffer_response.framebuffer_count < 1) {
             arch.halt();
         }
     }
 
+    // Initialize x87 FPU
+    asm volatile("fninit");
+
+    // Enable SSE
+    var cr0 = arch.cr.read(0);
+    cr0 &= ~(@intCast(u64, 1) << 2);
+    cr0 |= @intCast(u64, 1) << 1;
+    arch.cr.write(0, cr0);
+
+    var cr4 = arch.cr.read(4);
+    cr4 |= @intCast(u64, 3) << 9;
+    arch.cr.write(4, cr4);
+
+    writer.init();
     lara.main();
     arch.halt();
 }

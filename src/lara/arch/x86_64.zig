@@ -21,6 +21,9 @@ pub fn halt() void {
 
 /// x86 specific functions
 
+pub const io = @import("x86_64/io.zig");
+pub const cr = @import("x86_64/cr.zig");
+
 pub const CpuidResult = struct {
     eax: u32,
     ebx: u32,
@@ -61,49 +64,4 @@ pub fn cpuidMax(leaf: u32) [2]u32 {
         result.eax,
         result.ebx,
     };
-}
-
-pub fn out8(port: u16) u8 {
-    return asm volatile("inb %[port],%[ret]"
-        : [ret] "={al}"(-> u8),
-        : [port] "N{dx}"(port),
-    );
-}
-
-pub fn out16(port: u16) u16 {
-    return asm volatile("inw %[port],%[ret]"
-        : [ret] "={al}"(-> u16),
-        : [port] "N{dx}"(port),
-    );
-}
-
-pub fn out32(port: u16) u32 {
-    return asm volatile("inl %[port],%[ret]"
-        : [ret] "={eax}"(-> u32),
-        : [port] "N{dx}"(port),
-    );
-}
-
-pub fn in8(port: u16, value: u8) void {
-    asm volatile("outb %[value],%[port]"
-        :
-        : [value] "{al}"(value),
-          [port] "N{dx}"(port),
-    );
-}
-
-pub fn in16(port: u16, value: u16) void {
-    asm volatile("outw %[value],%[port]"
-        :
-        : [value] "{al}"(value),
-          [port] "N{dx}"(port),
-    );
-}
-
-pub fn in32(port: u16, value: u32) void {
-    asm volatile("outl %[value],%[port]"
-        :
-        : [value] "{eax}"(value),
-          [port] "N{dx}"(port),
-    );
 }

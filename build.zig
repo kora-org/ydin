@@ -26,13 +26,13 @@ fn genTarget(arch: Arch) !CrossTarget {
 
     switch (arch) {
         .x86_64 => {
-            const features = std.Target.x86.Feature;
-            target.cpu_features_sub.addFeature(@enumToInt(features.mmx));
-            target.cpu_features_sub.addFeature(@enumToInt(features.sse));
-            target.cpu_features_sub.addFeature(@enumToInt(features.sse2));
-            target.cpu_features_sub.addFeature(@enumToInt(features.avx));
-            target.cpu_features_sub.addFeature(@enumToInt(features.avx2));
-            target.cpu_features_add.addFeature(@enumToInt(features.soft_float));
+            //const features = std.Target.x86.Feature;
+            //target.cpu_features_sub.addFeature(@enumToInt(features.mmx));
+            //target.cpu_features_sub.addFeature(@enumToInt(features.sse));
+            //target.cpu_features_sub.addFeature(@enumToInt(features.sse2));
+            //target.cpu_features_sub.addFeature(@enumToInt(features.avx));
+            //target.cpu_features_sub.addFeature(@enumToInt(features.avx2));
+            //target.cpu_features_add.addFeature(@enumToInt(features.soft_float));
         },
 
         else => return error.UnsupportedArchitecture,
@@ -84,10 +84,10 @@ fn buildLimineIso(b: *Builder, lara: *std.build.LibExeObjStep) !*std.build.RunSt
             "make -C " ++ limine_path ++ " && ",
             "cp zig-out/bin/vmlara zig-out/iso/root && ",
             "cp src/lara/arch/x86_64/boot/limine.cfg zig-out/iso/root && ",
-            "cp", limine_path ++ "/limine.sys ",
-                  limine_path ++ "/limine-cd.bin ",
-                  limine_path ++ "/limine-cd-efi.bin ",
-                  "zig-out/iso/root",
+            "cp ", limine_path ++ "/limine.sys ",
+                   limine_path ++ "/limine-cd.bin ",
+                   limine_path ++ "/limine-cd-efi.bin ",
+                   "zig-out/iso/root && ",
             "xorriso -as mkisofs -quiet -b limine-cd.bin ",
                 "-no-emul-boot -boot-load-size 4 -boot-info-table ",
                 "--efi-boot limine-cd-efi.bin ",
@@ -117,6 +117,7 @@ fn runIsoQemu(b: *Builder, iso: *std.build.RunStep, arch: Arch) !*std.build.RunS
         "-m", "2G",
         "-cdrom", "zig-out/iso/faruos.iso",
         "-boot", "d",
+        "-serial", "stdio",
     };
     const qemu_iso_cmd = b.addSystemCommand(qemu_iso_args);
     qemu_iso_cmd.step.dependOn(&iso.step);
