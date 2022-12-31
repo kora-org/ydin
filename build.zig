@@ -55,16 +55,18 @@ fn buildLara(b: *Builder, target: CrossTarget) !*std.build.LibExeObjStep {
         .aarch64 => .small,
         else => return error.UnsupportedArchitecture,
     };
-    lara.addPackagePath("arch", switch (target.cpu_arch.?) {
-        .x86_64 => "src/lara/arch/x86_64.zig",
-        else => return error.UnsupportedArchitecture,
-    });
+    //lara.addPackagePath("arch", switch (target.cpu_arch.?) {
+    //    .x86_64 => "src/lara/arch/x86_64.zig",
+    //    else => return error.UnsupportedArchitecture,
+    //});
     lara.setBuildMode(mode);
     deps.addAllTo(lara);
-    lara.setLinkerScriptPath(.{ .path = switch (target.cpu_arch.?) {
-        .x86_64 => "src/lara/arch/x86_64/linker.ld",
-        else => return error.UnsupportedArchitecture,
-    }});
+    lara.setLinkerScriptPath(.{
+        .path = switch (target.cpu_arch.?) {
+            .x86_64 => "src/lara/arch/x86_64/linker.ld",
+            else => return error.UnsupportedArchitecture,
+        },
+    });
     lara.install();
 
     return lara;
@@ -78,6 +80,7 @@ fn buildLimineIso(b: *Builder, lara: *std.build.LibExeObjStep) !*std.build.RunSt
         else => return error.UnsupportedOs,
     };
     const cmd = &[_][]const u8{
+        // zig fmt: off
         "/bin/sh", "-c",
         std.mem.concat(b.allocator, u8, &[_][]const u8{
             "mkdir -p zig-out/iso/root && ",
@@ -94,6 +97,7 @@ fn buildLimineIso(b: *Builder, lara: *std.build.LibExeObjStep) !*std.build.RunSt
                 "-efi-boot-part --efi-boot-image --protective-msdos-label ",
                 "zig-out/iso/root -o zig-out/iso/faruos.iso && ",
             limine_path ++ "/" ++ limine_install ++ " " ++ "zig-out/iso/faruos.iso",
+        // zig fmt: on
         }) catch unreachable,
     };
 
@@ -112,12 +116,15 @@ fn runIsoQemu(b: *Builder, iso: *std.build.RunStep, arch: Arch) !*std.build.RunS
         else => return error.UnsupportedArchitecture,
     };
     const qemu_iso_args = &[_][]const u8{
+        // zig fmt: off
         qemu_executable,
+        //"-s", "-S",
         "-M", "q35,accel=kvm:whpx:tcg",
         "-m", "2G",
         "-cdrom", "zig-out/iso/faruos.iso",
         "-boot", "d",
-        "-serial", "stdio",
+        //"-serial", "stdio",
+        // zig fmt: on
     };
     const qemu_iso_cmd = b.addSystemCommand(qemu_iso_args);
     qemu_iso_cmd.step.dependOn(&iso.step);

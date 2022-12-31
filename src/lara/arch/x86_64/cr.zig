@@ -27,22 +27,27 @@ pub fn read(comptime cr: i8) u64 {
 pub fn write(comptime cr: i8, value: u64) void {
     switch(cr) {
         0 => asm volatile("mov %[value], %%cr0"
+            :
             : [value] "r"(value),
         ),
 
         2 => asm volatile("mov %[value], %%cr2"
+            :
             : [value] "r"(value),
         ),
 
         3 => asm volatile("mov %[value], %%cr3"
+            :
             : [value] "r"(value),
         ),
 
         4 => asm volatile("mov %[value], %%cr4"
+            :
             : [value] "r"(value),
         ),
 
         8 => asm volatile("mov %[value], %%cr8"
+            :
             : [value] "r"(value),
         ),
 

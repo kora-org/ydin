@@ -1,12 +1,14 @@
 const std = @import("std");
-const limine = @import("limine");
-const arch = @import("arch");
+pub const limine = @import("limine");
+const arch = @import("../x86_64.zig");
 const lara = @import("../../main.zig");
 const writer = @import("../../writer.zig");
 pub const panic = @import("panic.zig").panic;
 
 pub export var framebuffer_request: limine.Framebuffer.Request = .{};
 pub var framebuffer_response: limine.Framebuffer.Response = undefined;
+pub export var hhdm_request: limine.Hhdm.Request = .{};
+pub var hhdm_response: limine.Hhdm.Response = undefined;
 
 pub fn log(comptime level: std.log.Level, comptime scope: @Type(.EnumLiteral), comptime format: []const u8, args: anytype) void {
     const scope_prefix = if (scope == .default) "lara" else @tagName(scope);
@@ -28,8 +30,16 @@ pub export fn _start() callconv(.C) void {
         }
     }
 
+    if (hhdm_request.response) |hhdm| {
+        hhdm_response = hhdm.*;
+
+        //if (hhdm_response.offset == 0) {
+        //    arch.halt();
+        //}
+    }
+
     // Initialize x87 FPU
-    asm volatile("fninit");
+    asm volatile ("fninit");
 
     // Enable SSE
     var cr0 = arch.cr.read(0);

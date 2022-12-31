@@ -1,26 +1,27 @@
 const std = @import("std");
 
 pub fn enableInterrupts() void {
-    asm volatile("sti");
+    asm volatile ("sti");
 }
 
 pub fn disableInterrupts() void {
-    asm volatile("cli");
+    asm volatile ("cli");
 }
 
 pub fn pause() void {
-    asm volatile("pause" ::: "memory");
+    asm volatile ("pause" ::: "memory");
 }
 
 pub fn halt() void {
     disableInterrupts();
-    while(true) {
-        asm volatile("hlt");
+    while (true) {
+        asm volatile ("hlt");
     }
 }
 
-/// x86 specific functions
+pub const pmm = @import("x86_64/pmm.zig");
 
+/// x86 specific functions
 pub const io = @import("x86_64/io.zig");
 pub const cr = @import("x86_64/cr.zig");
 
@@ -41,7 +42,7 @@ pub fn cpuidWithSubleaf(leaf: u32, sub_leaf: u32) CpuidResult {
     var ecx: u32 = undefined;
     var edx: u32 = undefined;
 
-    asm volatile("cpuid"
+    asm volatile ("cpuid"
         : [eax] "={eax}" (eax),
           [ebx] "={ebx}" (ebx),
           [ecx] "={ecx}" (ecx),
