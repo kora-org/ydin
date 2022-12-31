@@ -123,7 +123,7 @@ fn runIsoQemu(b: *Builder, iso: *std.build.RunStep, arch: Arch) !*std.build.RunS
         "-m", "2G",
         "-cdrom", "zig-out/iso/faruos.iso",
         "-boot", "d",
-        //"-serial", "stdio",
+        "-serial", "stdio",
         // zig fmt: on
     };
     const qemu_iso_cmd = b.addSystemCommand(qemu_iso_args);

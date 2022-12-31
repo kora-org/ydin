@@ -1,6 +1,5 @@
 const std = @import("std");
-const limine = @import("root").limine;
-//const hhdm = @import("root").hhdm_response;
+const limine = @import("limine");
 const bitmap = @import("../../bitmap.zig");
 const math = @import("../../math.zig");
 const log = std.log.scoped(.pmm);

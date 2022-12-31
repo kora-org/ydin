@@ -1,7 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const arch = @import("arch.zig");
-//const pmm = @import("pmm.zig");
 const log = std.log.scoped(.lara);
 
 pub fn main() void {
