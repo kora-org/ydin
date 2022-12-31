@@ -75,6 +75,7 @@ pub fn init() void {
         var highest_address: u64 = 0;
         var entries = memmap.getEntries();
 
+        // Calculate how big should the memory map be.
         for (entries) |entry, i| {
             log.info("Entry {}: base=0x{x}, length=0x{x}, type={s}", .{ i, entry.base, entry.length, @tagName(entry.type) });
             switch (entry.type) {
@@ -86,26 +87,30 @@ pub fn init() void {
             }
         }
 
+        // Calculate the needed size for the bitmap in bytes and align it to page size.<F11>
         page_count = highest_address / page_size;
         const bitmap_size = math.alignUp(page_count / 8, page_size);
 
         log.info("Highest address: {x}", .{highest_address});
-        log.info("Bitmap size: {d} bytes", .{bitmap_size});
+        log.info("Bitmap size: {} bytes", .{bitmap_size});
 
+        // Find a hole for the bitmap in the memory map
         for (entries) |entry| {
             if (entry.type != .Usable) continue;
             if (entry.length >= bitmap_size) {
                 pmm_bitmap = @intToPtr([*]u8, entry.base + higher_half);
 
+                // Initialize the bitmap to 1
                 @memset(pmm_bitmap, 0xff, bitmap_size);
 
-                entry.length += bitmap_size;
+                entry.length -= bitmap_size;
                 entry.base += bitmap_size;
 
                 break;
             }
         }
 
+        // Populate free bitmap entries according to the memory map.
         for (entries) |entry| {
             if (entry.type != .Usable) continue;
 
@@ -114,8 +119,8 @@ pub fn init() void {
                 bitmap.unset(pmm_bitmap, (entry.base + i) / page_size);
         }
 
-        log.info("Usable memory: {d} MB", .{(usable_pages * 4096) / 1024 / 1024});
-        log.info("Reserved memory: {d} MB", .{(reserved_pages * 4096) / 1024 / 1024});
+        log.info("Usable memory: {} MB", .{(usable_pages * 4096) / 1024 / 1024});
+        log.info("Reserved memory: {} MB", .{(reserved_pages * 4096) / 1024 / 1024});
 
         slabs[0].init(8);
         slabs[1].init(16);
@@ -164,7 +169,7 @@ pub fn alloc_nozero(count: u64) *anyopaque {
         last_used_index = 0;
         ret = inner_alloc(count, last);
         //if (ret == undefined) {
-        //    @panic("Out of memory");
+        //    @panic("Allocated memory is null");
         //}
     }
 

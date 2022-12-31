@@ -6,7 +6,7 @@ pub fn Serial(comptime port: u16) type {
         data: u16 = port,
         interrupt: u16 = port + 1,
         fifo_ctrl: u16 = port + 2,
-        line_ctrl: u16  = port + 3,
+        line_ctrl: u16 = port + 3,
         modem_ctrl: u16 = port + 4,
         line_status: u16 = port + 5,
 
@@ -44,10 +44,10 @@ pub fn Serial(comptime port: u16) type {
         /// Sends a byte on the serial port
         pub fn writeByte(self: Self, byte: u8) void {
             switch (byte) {
-                8 | 0x7F => {
-                    io.write(u8, self.data, 8);
+                0x7F => {
+                    io.write(u8, self.data, 0x7F);
                     io.write(u8, self.data, ' ');
-                    io.write(u8, self.data, 8);
+                    io.write(u8, self.data, 0x7F);
                 },
                 else => io.write(u8, self.data, byte),
             }
