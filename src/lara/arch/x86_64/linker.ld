@@ -10,17 +10,27 @@ PHDRS {
 SECTIONS {
     . = 0xffffffff80000000;
 
+    text_start = .;
+
     .text : {
         *(.text .text.*)
     } :text
 
+    text_end = .;
+
     . += CONSTANT(MAXPAGESIZE);
+
+    rodata_start = .;
 
     .rodata : {
         *(.rodata .rodata.*)
     } :rodata
 
+    rodata_end = .;
+
     . += CONSTANT(MAXPAGESIZE);
+
+    data_start = .;
 
     .data : {
         *(.data .data.*)
@@ -30,4 +40,6 @@ SECTIONS {
         *(COMMON)
         *(.bss .bss.*)
     } :data
+
+    data_end = .;
 }

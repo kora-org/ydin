@@ -19,7 +19,7 @@ pub fn halt() void {
     }
 }
 
-pub const pmm = @import("x86_64/pmm.zig");
+pub const mm = @import("x86_64/mm.zig");
 
 /// x86 specific functions
 pub const io = @import("x86_64/io.zig");
