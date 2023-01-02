@@ -21,9 +21,8 @@ pub fn init() void {
         var entries = memmap.getEntries();
 
         // Calculate how big should the memory map be.
-        log.info("Memory map layout:", .{});
         for (entries) |entry, i| {
-            log.info("Entry {}: base=0x{x}, length=0x{x}, type={s}", .{ i, entry.base, entry.length, @tagName(entry.type) });
+            log.info("Memory map entry {}: base=0x{x}, length=0x{x}, type={s}", .{ i, entry.base, entry.length, @tagName(entry.type) });
             if (entry.type != .Usable and entry.type != .BootloaderReclaimable)
                 continue;
 
@@ -37,7 +36,6 @@ pub fn init() void {
         used_pages = page_count;
         const bitmap_size = math.alignUp(page_count / 8, page_size);
 
-        log.info("Memory specifications:", .{});
         log.info("Used pages: {}", .{used_pages});
         log.info("Bitmap size: {} KB", .{bitmap_size / 1024});
 
@@ -70,7 +68,7 @@ pub fn init() void {
     }
 }
 
-fn inner_alloc(count: u64, limit: u64) *anyopaque {
+fn inner_alloc(count: u64, limit: u64) ?[*]u8 {
     var p: u64 = 0;
 
     while (last_used_index < limit) {
@@ -85,7 +83,7 @@ fn inner_alloc(count: u64, limit: u64) *anyopaque {
                 while (i < last_used_index) : (i += 1)
                     bitmap.set(pmm_bitmap, i);
 
-                return @intToPtr(*anyopaque, page * page_size);
+                return @intToPtr([*]u8, page * page_size);
             }
         } else {
             last_used_index += 1;
@@ -93,40 +91,40 @@ fn inner_alloc(count: u64, limit: u64) *anyopaque {
         }
     }
 
-    return undefined;
+    return null;
 }
 
-pub fn alloc_nozero(count: u64) *anyopaque {
+pub fn alloc_nozero(count: u64) ?[*]u8 {
     const last = last_used_index;
     var ret = inner_alloc(count, page_count);
 
-    if (ret == undefined) {
+    if (ret == null) {
         last_used_index = 0;
         ret = inner_alloc(count, last);
-        //if (ret == undefined) {
-        //    @panic("Allocated memory is null");
-        //}
+        if (ret == null) {
+            @panic("Allocated memory is null");
+        }
     }
 
     used_pages += count;
     return ret;
 }
 
-pub fn alloc(count: u64) *anyopaque {
+pub fn alloc(count: u64) ?[*]u8 {
     const ret = alloc_nozero(count);
-    var ptr = @intToPtr(*anyopaque, ret + vmm.higher_half);
+    var ptr = @intToPtr([*]u8, @ptrToInt(ret.?) + vmm.higher_half);
 
-    var i = 0;
+    var i: u64 = 0;
     while (i < (count * page_size) / 8) : (i += 1)
         ptr[i] = 0;
 
     return ret;
 }
 
-pub fn free(ptr: *void, count: u64) void {
-    const page = ptr / page_size;
+pub fn free(ptr: [*]u8, count: u64) void {
+    const page = @ptrToInt(ptr) / page_size;
 
-    var i = 0;
+    var i: u64 = 0;
     while (i < page + count) : (i += 1)
         bitmap.unset(pmm_bitmap, i);
 

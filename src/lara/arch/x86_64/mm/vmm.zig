@@ -43,9 +43,9 @@ const Pagemap = struct {
     top_level: *u64,
 };
 
-var pagemap: Pagemap = undefined;
+var pagemap: *Pagemap = undefined;
 
-pub fn initPagemap() *Pagemap {
+pub fn createPagemap(allocator: std.mem.Allocator) *Pagemap {
     const top_level: *u64 = @ptrCast(*u64, pmm.alloc(1));
 
     const p1 = @intToPtr(*u64, @ptrToInt(top_level) + vmm.higher_half);
@@ -55,8 +55,12 @@ pub fn initPagemap() *Pagemap {
     while (i < 512) : (i += 1)
         p1[i] = p2[i];
 
-    var _pagemap = @ptrCast(*Pagemap, slab.alloc(@sizeOf(Pagemap)));
+    var _pagemap = @ptrCast(*Pagemap, allocator.alloc(*Pagemap, @sizeOf(Pagemap)) catch unreachable);
     _pagemap.top_level = top_level;
 
     return _pagemap;
+}
+
+pub fn init(allocator: *std.mem.Allocator) void {
+    pagemap = @ptrCast(*Pagemap, allocator.alloc(*Pagemap, @sizeOf(Pagemap)) catch unreachable);
 }

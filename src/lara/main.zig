@@ -8,5 +8,6 @@ pub fn main() void {
     log.info("Compiled with Zig v{}", .{builtin.zig_version});
     log.info("All your codebase are belong to us.", .{});
     arch.mm.pmm.init();
+    arch.mm.vmm.init(&arch.mm.slab.allocator);
     @panic("test");
 }
