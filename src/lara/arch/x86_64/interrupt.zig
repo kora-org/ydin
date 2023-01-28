@@ -1,9 +1,11 @@
 const std = @import("std");
-const root = @import("root");
+const sched = @import("sched.zig");
 const arch = @import("../x86_64.zig");
 const log = std.log.scoped(.interrupt);
 
-pub const InterruptFrame = extern struct {
+pub const Frame = extern struct {
+    const Self = @This();
+
     rax: u64,
     rbx: u64,
     rcx: u64,
@@ -27,13 +29,13 @@ pub const InterruptFrame = extern struct {
     rsp: u64,
     ss: u64,
 
-    pub fn dump(self: InterruptFrame, log_func: anytype) void {
-        log_func("RAX: {X:0>16} - RBX: {X:0>16} - RCX: {X:0>16}", .{ self.rax, self.rbx, self.rcx });
-        log_func("RDX: {X:0>16} - RDI: {X:0>16} - RSI: {X:0>16}", .{ self.rdx, self.rdi, self.rsi });
-        log_func("RBP: {X:0>16} - R8:  {X:0>16} - R9:  {X:0>16}", .{ self.rbp, self.r8, self.r9 });
-        log_func("R10: {X:0>16} - R11: {X:0>16} - R12: {X:0>16}", .{ self.r10, self.r11, self.r12 });
-        log_func("R13: {X:0>16} - R14: {X:0>16} - R15: {X:0>16}", .{ self.r13, self.r14, self.r15 });
-        log_func("RSP: {X:0>16} - RIP: {X:0>16} - CS:  {X:0>16}", .{ self.rsp, self.rip, self.cs });
+    pub fn dump(self: *Self, log_func: anytype) void {
+        log_func("RAX: {X:0>16} RBX: {X:0>16} RCX: {X:0>16}", .{ self.rax, self.rbx, self.rcx });
+        log_func("RDX: {X:0>16} RDI: {X:0>16} RSI: {X:0>16}", .{ self.rdx, self.rdi, self.rsi });
+        log_func("RBP: {X:0>16} R8:  {X:0>16} R9:  {X:0>16}", .{ self.rbp, self.r8, self.r9 });
+        log_func("R10: {X:0>16} R11: {X:0>16} R12: {X:0>16}", .{ self.r10, self.r11, self.r12 });
+        log_func("R13: {X:0>16} R14: {X:0>16} R15: {X:0>16}", .{ self.r13, self.r14, self.r15 });
+        log_func("RSP: {X:0>16} RIP: {X:0>16} CS:  {X:0>16}", .{ self.rsp, self.rip, self.cs });
 
         var cr2 = asm volatile ("mov %%cr2, %[out]"
             : [out] "=r" (-> u64),
@@ -45,41 +47,56 @@ pub const InterruptFrame = extern struct {
 };
 
 const Entry = packed struct {
-    offset_low: u16,
+    base_low: u16,
     selector: u16,
     ist: u8,
     flags: u8,
-    offset_mid: u16,
-    offset_high: u32,
-    reserved: u32 = 0,
+    base_mid: u16,
+    base_high: u32,
+    _reserved: u32 = 0,
 
-    fn fromPtr(ptr: u64, ist: u8) Entry {
+    fn init(stub: Stub, ist: u8) Entry {
+        var addr: u64 = @ptrToInt(stub);
+
         return Entry{
-            .offset_low = @truncate(u16, ptr),
+            .base_low = @truncate(u16, addr),
             .selector = 0x28,
             .ist = ist,
             .flags = 0x8e,
-            .offset_mid = @truncate(u16, ptr >> 16),
-            .offset_high = @truncate(u32, ptr >> 32),
+            .base_mid = @truncate(u16, addr >> 16),
+            .base_high = @truncate(u32, addr >> 32),
         };
     }
 };
 
-const InterruptStub = *const fn () callconv(.Naked) void;
-const InterruptHandler = *const fn (*InterruptFrame) callconv(.C) void;
+const Stub = *const fn () callconv(.Naked) void;
+const Handler = *const fn (*Frame) callconv(.C) void;
 var entries: [256]Entry = undefined;
+var entries_generated: bool = false;
 
-export var handlers: [256]InterruptHandler = [_]InterruptHandler{handleException} ** 32 ++ [_]InterruptHandler{handleIrq} ** 224;
+export var handlers: [256]Handler = [_]Handler{handleException} ** 32 ++ [_]Handler{handleIrq} ** 224;
 
 pub fn setHandler(func: anytype, vec: u8) void {
     handlers[vec] = func;
 }
 
-pub fn load() void {
+pub fn init() void {
     const idtr = arch.Descriptor{
         .size = @as(u16, (@sizeOf(Entry) * 256) - 1),
         .ptr = @ptrToInt(&entries),
     };
+
+    if (!entries_generated) {
+        for (genStubTable()) |stub, idx| {
+            if (idx == sched.TIMER_VECTOR) {
+                entries[idx] = Entry.init(stub, 1);
+            } else {
+                entries[idx] = Entry.init(stub, 0);
+            }
+        }
+
+        entries_generated = true;
+    }
 
     asm volatile ("lidt %[idtr]"
         :
@@ -87,31 +104,22 @@ pub fn load() void {
     );
 }
 
-pub fn init() void {
-    for (genStubTable()) |stub, idx| {
-        entries[idx] = Entry.fromPtr(@as(u64, @ptrToInt(stub)), 0);
-    }
-
-    load();
-}
-
-fn handleIrq(frame: *InterruptFrame) callconv(.C) void {
+fn handleIrq(frame: *Frame) callconv(.C) void {
     log.err("CPU triggered IRQ #{}, which has no handler!", .{frame.vec});
     @panic("Unhandled IRQ");
 }
 
-fn handleException(frame: *InterruptFrame) callconv(.C) void {
+fn handleException(frame: *Frame) callconv(.C) void {
     log.err("CPU exception #{}: ", .{frame.vec});
     frame.dump(log.err);
-
+    log.err("System halted.", .{});
     arch.halt();
 }
 
-fn genStubTable() [256]InterruptStub {
-    var result = [1]InterruptStub{undefined} ** 256;
+fn genStubTable() [256]Stub {
+    var result = [1]Stub{undefined} ** 256;
 
     comptime var i: usize = 0;
-
     inline while (i < 256) : (i += 1) {
         result[i] = comptime makeStub(i);
     }
@@ -119,15 +127,15 @@ fn genStubTable() [256]InterruptStub {
     return result;
 }
 
-fn makeStub(comptime vec: u8) InterruptStub {
+fn makeStub(comptime vec: u8) Stub {
     return struct {
         fn stub() callconv(.Naked) void {
             const has_ec = switch (vec) {
-                0x8 => true,
-                0xA...0xE => true,
+                0x08 => true,
+                0x0a...0x0e => true,
                 0x11 => true,
                 0x15 => true,
-                0x1D...0x1E => true,
+                0x1d...0x1e => true,
                 else => false,
             };
 

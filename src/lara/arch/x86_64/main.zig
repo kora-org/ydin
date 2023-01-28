@@ -41,21 +41,19 @@ pub export fn _start() callconv(.C) void {
     }
 
     // Initialize x87 FPU
-    asm volatile ("fninit");
+    //asm volatile ("fninit");
 
     // Enable SSE
-    var cr0 = arch.cr.read(0);
-    cr0 &= ~(@intCast(u64, 1) << 2);
-    cr0 |= @intCast(u64, 1) << 1;
-    arch.cr.write(0, cr0);
+    //var cr0 = arch.cr.read(0);
+    //cr0 &= ~(@intCast(u64, 1) << 2);
+    //cr0 |= @intCast(u64, 1) << 1;
+    //arch.cr.write(0, cr0);
 
-    var cr4 = arch.cr.read(4);
-    cr4 |= @intCast(u64, 3) << 9;
-    arch.cr.write(4, cr4);
+    //var cr4 = arch.cr.read(4);
+    //cr4 |= @intCast(u64, 3) << 9;
+    //arch.cr.write(4, cr4);
 
     writer.init();
-    gdt.init();
-    interrupt.init();
     lara.main();
     arch.halt();
 }

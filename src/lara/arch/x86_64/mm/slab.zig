@@ -1,20 +1,22 @@
 const std = @import("std");
+const arch = @import("../../x86_64.zig");
 const pmm = @import("pmm.zig");
 const vmm = @import("vmm.zig");
 const math = @import("../../../math.zig");
 const Allocator = std.mem.Allocator;
 
 pub const Slab = struct {
+    lock: arch.Spinlock,
     first_free: [*]u8,
     entry_size: u64,
 
     const Header = struct { slab: *Slab };
 
-    pub fn init(self: *@This(), entry_size: u64) void {
+    pub fn init(self: *Slab, entry_size: u64) void {
         self.entry_size = entry_size;
         self.first_free = @intToPtr([*]u8, @ptrToInt(pmm.allocNz(1)) + pmm.hhdm_response.offset);
 
-        const size = pmm.page_size - math.alignUp(@sizeOf(Header), entry_size);
+        const size = std.mem.page_size - math.alignUp(@sizeOf(Header), entry_size);
         var slab_ptr = @ptrCast(*Header, @alignCast(@alignOf(*Header), self.first_free));
         slab_ptr.slab = self;
         self.first_free = @intToPtr([*]u8, @ptrToInt(self.first_free) + math.alignUp(@sizeOf(Header), entry_size));
@@ -31,7 +33,10 @@ pub const Slab = struct {
         array[max * fact] = undefined;
     }
 
-    pub fn alloc(self: *@This()) ?[*]u8 {
+    pub fn alloc(self: *Slab) ?[*]u8 {
+        self.lock.acq();
+        defer self.lock.rel();
+
         if (self.first_free == undefined) {
             self.init(self.entry_size);
         }
@@ -44,7 +49,10 @@ pub const Slab = struct {
         return old_free;
     }
 
-    pub fn free(self: *@This(), ptr: ?[*]u8) void {
+    pub fn free(self: *Slab, ptr: ?[*]u8) void {
+        self.lock.acq();
+        defer self.lock.rel();
+
         if (ptr == null)
             return;
 
@@ -91,7 +99,7 @@ pub fn alloc(_: *anyopaque, len: usize, _: u8, _: usize) ?[*]u8 {
     if (slab != undefined)
         return slab.alloc();
 
-    const page_count = math.divRoundup(len, pmm.page_size);
+    const page_count = math.divRoundup(len, std.mem.page_size);
     var ret = pmm.alloc(page_count + 1);
     if (ret == null)
         return null;
@@ -102,7 +110,7 @@ pub fn alloc(_: *anyopaque, len: usize, _: u8, _: usize) ?[*]u8 {
     metadata.pages = page_count;
     metadata.size = len;
 
-    return @intToPtr([*]u8, @ptrToInt(ret) + pmm.page_size);
+    return @intToPtr([*]u8, @ptrToInt(ret) + std.mem.page_size);
 }
 
 pub fn _resize(buf: []u8, new_size: usize) []u8 {
@@ -110,8 +118,8 @@ pub fn _resize(buf: []u8, new_size: usize) []u8 {
         return alloc(undefined, new_size, 0, 0).?[0..new_size];
 
     if ((@ptrToInt(buf.ptr) & 0xfff) == 0) {
-        var metadata = @intToPtr(*AllocMetadata, @ptrToInt(buf.ptr) - pmm.page_size);
-        if (math.divRoundup(metadata.size, pmm.page_size) == math.divRoundup(new_size, pmm.page_size)) {
+        var metadata = @intToPtr(*AllocMetadata, @ptrToInt(buf.ptr) - std.mem.page_size);
+        if (math.divRoundup(metadata.size, std.mem.page_size) == math.divRoundup(new_size, std.mem.page_size)) {
             metadata.size = new_size;
             return buf;
         }
@@ -163,7 +171,7 @@ pub fn free(_: *anyopaque, buf: []u8, _: u8, _: usize) void {
         return;
 
     if ((@ptrToInt(buf.ptr) & 0xfff) == 0) {
-        var metadata = @intToPtr(*AllocMetadata, @ptrToInt(buf.ptr) - pmm.page_size);
+        var metadata = @intToPtr(*AllocMetadata, @ptrToInt(buf.ptr) - std.mem.page_size);
         pmm.free(@intToPtr([*]u8, @ptrToInt(metadata) - pmm.hhdm_response.offset), metadata.pages + 1);
         return;
     }

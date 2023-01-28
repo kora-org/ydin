@@ -74,7 +74,7 @@ fn printSymbol(address: u64) void {
         return printInfo(address, symbol_name, line_info.file_name, line_info.line);
     }
 
-    printInfo(address, symbol_name, "??", 0);
+    printInfo(address, symbol_name, "???", 0);
 }
 
 fn printInfo(address: u64, symbol_name: []const u8, file_name: []const u8, line: usize) void {

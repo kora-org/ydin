@@ -23,7 +23,7 @@ pub const PageFlags = packed struct {
     _padding: u24 = 0,
 };
 
-var pagemap = Pagemap{};
+pub var pagemap = Pagemap{};
 
 pub fn init() void {
     pagemap.root = @ptrToInt(pmm.alloc(1));

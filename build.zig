@@ -26,13 +26,13 @@ fn genTarget(arch: Arch) !CrossTarget {
 
     switch (arch) {
         .x86_64 => {
-            //const features = std.Target.x86.Feature;
-            //target.cpu_features_sub.addFeature(@enumToInt(features.mmx));
-            //target.cpu_features_sub.addFeature(@enumToInt(features.sse));
-            //target.cpu_features_sub.addFeature(@enumToInt(features.sse2));
-            //target.cpu_features_sub.addFeature(@enumToInt(features.avx));
-            //target.cpu_features_sub.addFeature(@enumToInt(features.avx2));
-            //target.cpu_features_add.addFeature(@enumToInt(features.soft_float));
+            const features = std.Target.x86.Feature;
+            target.cpu_features_sub.addFeature(@enumToInt(features.mmx));
+            target.cpu_features_sub.addFeature(@enumToInt(features.sse));
+            target.cpu_features_sub.addFeature(@enumToInt(features.sse2));
+            target.cpu_features_sub.addFeature(@enumToInt(features.avx));
+            target.cpu_features_sub.addFeature(@enumToInt(features.avx2));
+            target.cpu_features_add.addFeature(@enumToInt(features.soft_float));
         },
 
         else => return error.UnsupportedArchitecture,
@@ -119,6 +119,8 @@ fn runIsoQemu(b: *Builder, iso: *std.build.RunStep, arch: Arch) !*std.build.RunS
         // zig fmt: off
         qemu_executable,
         //"-s", "-S",
+        "-cpu", "max",
+        "-smp", "2",
         "-M", "q35,accel=kvm:whpx:tcg",
         "-m", "2G",
         "-cdrom", "zig-out/iso/faruos.iso",

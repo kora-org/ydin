@@ -6,6 +6,8 @@ pub const Gdt = extern struct {
     tss: Tss.Entry,
 
     pub fn flush(gdtr: arch.Descriptor) void {
+        var gs_base = arch.rdmsr(0xc0000101);
+
         asm volatile (
             \\lgdt %[gdtr]
             \\push $0x28
@@ -23,6 +25,8 @@ pub const Gdt = extern struct {
             : [gdtr] "*p" (&gdtr),
             : "rax", "rcx", "memory"
         );
+
+        arch.wrmsr(0xc0000101, gs_base);
     }
 };
 
@@ -96,15 +100,12 @@ var gdt: Gdt = .{
         .base_upper = 0,
     },
 };
-var descriptor: arch.Descriptor = undefined;
-var tss: Tss = undefined;
 
 pub fn init() void {
-    //tss.init();
-
-    descriptor.size = @sizeOf(Gdt) - 1;
-    descriptor.ptr = @ptrToInt(&gdt);
+    var descriptor = arch.Descriptor{
+        .size = @sizeOf(Gdt) - 1,
+        .ptr = @ptrToInt(&gdt),
+    };
 
     Gdt.flush(descriptor);
-    //tss.flush();
 }
