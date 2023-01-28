@@ -58,7 +58,7 @@ pub export fn smpEntry(cpu_info: *limine.Smp.Cpu) callconv(.C) noreturn {
     createCoreInfo(cpu_info);
     gdt.init();
     interrupt.init();
-    cpu.init(isBsp());
+    cpu.init();
     lapic.enable();
 
     // load the TSS

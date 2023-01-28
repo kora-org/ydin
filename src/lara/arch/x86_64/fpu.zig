@@ -1,6 +1,6 @@
 const std = @import("std");
 const arch = @import("../x86_64.zig");
-//const smp = @import("smp.zig");
+const smp = @import("smp.zig");
 const log = std.log.scoped(.fpu);
 
 const SaveType = enum {
@@ -146,7 +146,7 @@ pub fn save(save_area: []const u8) void {
     }
 }
 
-pub fn init(bsp: bool) void {
+pub fn init() void {
     // enable SSE & FXSAVE/FXRSTOR
     arch.cr.write(4, arch.cr.read(4) | (3 << 9));
 
@@ -172,7 +172,7 @@ pub fn init(bsp: bool) void {
         wrxcr(0, @as(u64, arch.cpuid(0x0d, 0).eax) & supported_mask);
         result = arch.cpuid(0x0d, 0);
 
-        if (bsp) {
+        if (smp.isBsp()) {
             log.info("supported extensions bitmask: 0x{X}", .{result.eax});
         }
 
@@ -194,7 +194,7 @@ pub fn init(bsp: bool) void {
         mode = .fxsave;
     }
 
-    if (bsp) {
+    if (smp.isBsp()) {
         log.info(
             "using \"{s}\" instruction (with size={}) for FPU context management",
             .{ @tagName(mode), storage_size },

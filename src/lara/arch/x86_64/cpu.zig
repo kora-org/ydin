@@ -11,8 +11,8 @@ pub export fn handleSyscall(frame: *interrupt.Frame) callconv(.C) void {
     while (true) {}
 }
 
-pub fn init(bsp: bool) void {
-    fpu.init(bsp);
+pub fn init() void {
+    fpu.init();
 
     // set the CPU to a acceptable state
     cr.write(0, (cr.read(0) & ~@as(u64, 1 << 2)) | 0b10);

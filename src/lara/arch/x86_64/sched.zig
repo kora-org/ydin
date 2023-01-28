@@ -9,10 +9,10 @@ const vmm = @import("mm/vmm.zig");
 const slab = @import("mm/slab.zig");
 
 pub const Thread = struct {
+    id: usize = 0,
     link: Node,
     context: interrupt.Frame,
     kernel_stack: u64,
-    id: usize = 0,
     //proc: *proc.Process,
 };
 
@@ -81,8 +81,8 @@ pub fn exit() noreturn {
 }
 
 pub fn createKernelStack() ?u64 {
-    if (pmm.alloc(4)) |page| {
-        return (@ptrToInt(page) + 4 * std.mem.page_size) + pmm.hhdm_response.offset;
+    if (pmm.alloc(1)) |page| {
+        return (@ptrToInt(page) + std.mem.page_size) + pmm.hhdm_response.offset;
     } else {
         return null;
     }
