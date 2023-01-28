@@ -30,12 +30,12 @@ pub fn Serial(comptime port: u16) type {
 
             // Enable FIFO, clear TX/RX queues, and set a 14-byte
             // interrupt threshold
-            io.write(u8, self.fifo_ctrl, 0xC7);
+            io.write(u8, self.fifo_ctrl, 0xc7);
 
             // Mark data terminal ready, signal request to send
             // and enable auxilliary output #2 (used as interrupt line
             // for the CPU)
-            io.write(u8, self.modem_ctrl, 0x0B);
+            io.write(u8, self.modem_ctrl, 0x0b);
 
             // Enable interrupts
             io.write(u8, self.interrupt, 0x01);
@@ -44,10 +44,14 @@ pub fn Serial(comptime port: u16) type {
         /// Sends a byte on the serial port
         pub fn writeByte(self: Self, byte: u8) void {
             switch (byte) {
-                0x7F => {
-                    io.write(u8, self.data, 0x7F);
+                0x7f => {
+                    io.write(u8, self.data, 0x7f);
                     io.write(u8, self.data, ' ');
-                    io.write(u8, self.data, 0x7F);
+                    io.write(u8, self.data, 0x7f);
+                },
+                0x0a => {
+                    io.write(u8, self.data, 0x0d);
+                    io.write(u8, self.data, 0x0a);
                 },
                 else => io.write(u8, self.data, byte),
             }

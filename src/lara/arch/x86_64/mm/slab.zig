@@ -12,7 +12,7 @@ pub const Slab = struct {
 
     pub fn init(self: *@This(), entry_size: u64) void {
         self.entry_size = entry_size;
-        self.first_free = @intToPtr([*]u8, @ptrToInt(pmm.alloc_nozero(1)) + vmm.higher_half);
+        self.first_free = @intToPtr([*]u8, @ptrToInt(pmm.allocNz(1)) + pmm.hhdm_response.offset);
 
         const size = pmm.page_size - math.alignUp(@sizeOf(Header), entry_size);
         var slab_ptr = @ptrCast(*Header, @alignCast(@alignOf(*Header), self.first_free));
@@ -96,7 +96,7 @@ pub fn alloc(_: *anyopaque, len: usize, _: u8, _: usize) ?[*]u8 {
     if (ret == null)
         return null;
 
-    ret = @intToPtr([*]u8, @ptrToInt(ret.?) + vmm.higher_half);
+    ret = @intToPtr([*]u8, @ptrToInt(ret.?) + pmm.hhdm_response.offset);
     const metadata = @ptrCast(*AllocMetadata, @alignCast(@alignOf(AllocMetadata), ret.?));
 
     metadata.pages = page_count;
@@ -164,7 +164,7 @@ pub fn free(_: *anyopaque, buf: []u8, _: u8, _: usize) void {
 
     if ((@ptrToInt(buf.ptr) & 0xfff) == 0) {
         var metadata = @intToPtr(*AllocMetadata, @ptrToInt(buf.ptr) - pmm.page_size);
-        pmm.free(@intToPtr([*]u8, @ptrToInt(metadata) - vmm.higher_half), metadata.pages + 1);
+        pmm.free(@intToPtr([*]u8, @ptrToInt(metadata) - pmm.hhdm_response.offset), metadata.pages + 1);
         return;
     }
 

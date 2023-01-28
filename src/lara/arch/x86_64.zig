@@ -21,9 +21,14 @@ pub fn halt() void {
 
 pub const mm = @import("x86_64/mm.zig");
 
-/// x86 specific functions
+/// x86 specific stuff
 pub const io = @import("x86_64/io.zig");
 pub const cr = @import("x86_64/cr.zig");
+
+pub const Descriptor = packed struct {
+    size: u16,
+    ptr: u64,
+};
 
 pub const CpuidResult = struct {
     eax: u32,

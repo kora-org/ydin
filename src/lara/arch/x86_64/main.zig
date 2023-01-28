@@ -1,12 +1,18 @@
 const std = @import("std");
 pub const limine = @import("limine");
 const arch = @import("../x86_64.zig");
+const gdt = @import("gdt.zig");
+const interrupt = @import("interrupt.zig");
 const lara = @import("../../main.zig");
 const writer = @import("../../writer.zig");
 pub const panic = @import("panic.zig").panic;
 
 pub export var framebuffer_request: limine.Framebuffer.Request = .{};
 pub var framebuffer_response: limine.Framebuffer.Response = undefined;
+
+pub const std_options = struct {
+    pub const logFn = log;
+};
 
 pub fn log(comptime level: std.log.Level, comptime scope: @Type(.EnumLiteral), comptime format: []const u8, args: anytype) void {
     const scope_prefix = if (scope == .default) "lara" else @tagName(scope);
@@ -18,6 +24,12 @@ pub fn log(comptime level: std.log.Level, comptime scope: @Type(.EnumLiteral), c
     } ++ ": \x1b[0m";
     writer.writer.print(prefix ++ format ++ "\n", args) catch unreachable;
 }
+
+pub const os = .{
+    .heap = .{
+        .page_allocator = arch.mm.slab.allocator,
+    },
+};
 
 pub export fn _start() callconv(.C) void {
     if (framebuffer_request.response) |framebuffer| {
@@ -42,6 +54,8 @@ pub export fn _start() callconv(.C) void {
     arch.cr.write(4, cr4);
 
     writer.init();
+    gdt.init();
+    interrupt.init();
     lara.main();
     arch.halt();
 }
