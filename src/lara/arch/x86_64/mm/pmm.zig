@@ -25,9 +25,9 @@ const Bitmap = struct {
 };
 
 var bitmap: Bitmap = undefined;
-var page_count: u64 = 0;
-var last_used_index: u64 = 0;
-var used_pages: u64 = 0;
+var page_count: usize = 0;
+var last_used_index: usize = 0;
+var used_pages: usize = 0;
 var lock = arch.Spinlock{};
 
 pub export var memmap_request: limine.MemoryMap.Request = .{};
@@ -95,7 +95,7 @@ pub fn init() void {
     slab.init();
 }
 
-fn inner_alloc(count: u64, limit: u64) ?[*]u8 {
+fn inner_alloc(count: usize, limit: usize) ?[*]u8 {
     var p: usize = 0;
     while (last_used_index < limit) {
         if (!bitmap.check(last_used_index)) {

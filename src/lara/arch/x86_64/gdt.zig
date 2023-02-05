@@ -92,7 +92,7 @@ var gdt: Gdt = .{
         0x008ff2000000ffff,
     },
     .tss = .{
-        .length = 104,
+        .length = 0x68,
         .base_low = 0,
         .base_mid = 0,
         .flags = 0b10001001,

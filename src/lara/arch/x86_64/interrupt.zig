@@ -1,5 +1,4 @@
 const std = @import("std");
-const sched = @import("sched.zig");
 const arch = @import("../x86_64.zig");
 const log = std.log.scoped(.interrupt);
 
@@ -88,11 +87,7 @@ pub fn init() void {
 
     if (!entries_generated) {
         for (genStubTable()) |stub, idx| {
-            if (idx == sched.TIMER_VECTOR) {
-                entries[idx] = Entry.init(stub, 1);
-            } else {
-                entries[idx] = Entry.init(stub, 0);
-            }
+            entries[idx] = Entry.init(stub, 0);
         }
 
         entries_generated = true;

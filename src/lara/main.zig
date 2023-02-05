@@ -10,6 +10,5 @@ pub fn main() void {
     arch.mm.pmm.init();
     arch.mm.vmm.init();
     arch.acpi.init();
-    arch.smp.init();
     @panic("test");
 }

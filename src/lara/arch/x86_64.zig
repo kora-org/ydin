@@ -1,7 +1,6 @@
 const std = @import("std");
 
 pub const mm = @import("x86_64/mm.zig");
-pub const smp = @import("x86_64/smp.zig");
 pub const acpi = @import("x86_64/acpi.zig");
 
 pub fn interruptsEnabled() bool {
@@ -100,7 +99,6 @@ pub const Spinlock = struct {
 /// x86 specific stuff
 pub const io = @import("x86_64/io.zig");
 pub const cr = @import("x86_64/cr.zig");
-pub const lapic = @import("x86_64/lapic.zig");
 
 pub const Descriptor = packed struct {
     size: u16,
