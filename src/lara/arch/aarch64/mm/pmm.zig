@@ -1,6 +1,6 @@
 const std = @import("std");
 const limine = @import("limine");
-const arch = @import("../../x86_64.zig");
+const arch = @import("../../aarch64.zig");
 const vmm = @import("vmm.zig");
 const slab = @import("slab.zig");
 const log = std.log.scoped(.pmm);

@@ -1,6 +1,7 @@
 const std = @import("std");
 
 pub const mm = @import("x86_64/mm.zig");
+pub const framebuffer = @import("x86_64/framebuffer.zig");
 pub const acpi = @import("x86_64/acpi.zig");
 
 pub fn interruptsEnabled() bool {
@@ -37,37 +38,21 @@ pub const Spinlock = struct {
     refcount: std.atomic.Atomic(usize) = .{ .value = 0 },
     interrupts: bool = false,
 
-    pub fn acq(self: *Spinlock) void {
+    pub fn lock(self: *Spinlock) void {
         _ = self.refcount.fetchAdd(1, .Monotonic);
 
         var current = interruptsEnabled();
         disableInterrupts();
 
         while (true) {
-            // ------------------------------------------------
-            // x86 Instruction | Micro ops | Base Latency
-            // ------------------------------------------------
-            // XCHG                  8           23
-            // LOCK XADD             9           18
-            // LOCK CMPXCHG          10          18
-            // LOCK CMPXCHG8B        20          19
-            // ------------------------------------------------
-            // We're optimizing for micro ops, since base
-            // latency isn't consistent across CPU families.
-            // Therefore, we go with the XCHG instruction...
-            // ------------------------------------------------
-            // Source: https://agner.org/optimize/instruction_tables.pdf
-            //
-            if (self.lock_bits.swap(1, .Acquire) == 0) {
-                // 'self.lock_bits.swap' translates to a XCHG
+            if (self.lock_bits.swap(1, .Acquire) == 0)
                 break;
-            }
 
             while (self.lock_bits.fetchAdd(0, .Monotonic) != 0) {
-                // IRQs can be recived while waiting
-                // for the lock to be available...
-
-                if (interruptsEnabled()) enableInterrupts() else disableInterrupts();
+                if (interruptsEnabled())
+                    enableInterrupts()
+                else
+                    disableInterrupts();
 
                 std.atomic.spinLoopHint();
                 disableInterrupts();
@@ -79,20 +64,14 @@ pub const Spinlock = struct {
         self.interrupts = current;
     }
 
-    pub fn rel(self: *Spinlock) void {
+    pub fn unlock(self: *Spinlock) void {
         self.lock_bits.store(0, .Release);
         std.atomic.compilerFence(.Release);
 
-        if (self.interrupts) enableInterrupts() else disableInterrupts();
-    }
-
-    // wrappers for zig stdlib
-    pub inline fn lock(self: *Spinlock) void {
-        self.acq();
-    }
-
-    pub inline fn unlock(self: *Spinlock) void {
-        self.rel();
+        if (self.interrupts)
+            enableInterrupts()
+        else
+            disableInterrupts();
     }
 };
 
@@ -124,7 +103,7 @@ pub fn cpuid(leaf: u32, sub_leaf: u32) CpuidResult {
           [ecx] "={ecx}" (ecx),
           [edx] "={edx}" (edx),
         : [leaf] "{eax}" (leaf),
-          [subleaf] "{ecx}" (sub_leaf),
+          [sub_leaf] "{ecx}" (sub_leaf),
         : "memory"
     );
 

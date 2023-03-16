@@ -1,11 +1,8 @@
 const std = @import("std");
 const limine = @import("limine");
-const arch = @import("../x86_64.zig");
-const gdt = @import("gdt.zig");
-const interrupt = @import("interrupt.zig");
-const framebuffer = @import("framebuffer.zig");
-const lara = @import("../../main.zig");
+const arch = @import("../aarch64.zig");
 const writer = @import("../../writer.zig");
+const lara = @import("../../main.zig");
 pub const panic = @import("panic.zig").panic;
 
 pub const std_options = struct {
@@ -21,30 +18,12 @@ pub const std_options = struct {
     }
 };
 
-pub const os = .{
-    .heap = .{
-        .page_allocator = arch.mm.slab.allocator,
-    },
-};
-
+pub export var dtb_request: limine.DeviceTree.Request = .{};
 pub export fn _start() callconv(.C) void {
-    // Initialize x87 FPU
-    asm volatile ("fninit");
+    if (dtb_request.response) |dtb|
+        arch.device_tree = dtb.address;
 
-    // Enable SSE
-    var cr0 = arch.cr.read(0);
-    cr0 &= ~(@intCast(u64, 1) << 2);
-    cr0 |= @intCast(u64, 1) << 1;
-    arch.cr.write(0, cr0);
-
-    var cr4 = arch.cr.read(4);
-    cr4 |= @intCast(u64, 3) << 9;
-    arch.cr.write(4, cr4);
-
-    framebuffer.init();
     writer.init();
-    gdt.init();
-    interrupt.init();
     lara.main() catch unreachable;
     arch.halt();
 }

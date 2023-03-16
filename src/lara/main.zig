@@ -1,12 +1,13 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const build_options = @import("build_options");
 const arch = @import("arch.zig");
-const log = std.log.scoped(.lara);
+const psf = @import("psf.zig");
 
-pub fn main() void {
-    log.info("\x1b[94mFaruOS\x1b[0m version 0.1.0-dev", .{});
-    log.info("Compiled with Zig v{}", .{builtin.zig_version});
-    log.info("All your codebase are belong to us.", .{});
+pub fn main() !void {
+    std.log.info("\x1b[94mFaruOS\x1b[0m version {s}", .{build_options.version});
+    std.log.info("Compiled with Zig v{}", .{builtin.zig_version});
+    std.log.info("All your {s} are belong to us.", .{"codebase"});
     arch.mm.pmm.init();
     arch.mm.vmm.init();
     arch.acpi.init();

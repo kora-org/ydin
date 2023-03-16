@@ -4,6 +4,10 @@ license: MIT
 description: A simple Unix-like operating system written in Zig
 root_dependencies:
   - src: git https://github.com/leap0x7b/limine
+  - src: git https://github.com/kivikakk/dtb.zig
+    name: dtb
+    main: src/dtb.zig
+  - src: git https://github.com/leecannon/zig-sbi
   - src: git https://github.com/limine-bootloader/limine branch-v4.x-branch-binary
     id: limine
     keep: true

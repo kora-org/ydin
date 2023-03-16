@@ -1,5 +1,5 @@
 const std = @import("std");
-const arch = @import("../../x86_64.zig");
+const arch = @import("../../aarch64.zig");
 const pmm = @import("pmm.zig");
 const vmm = @import("vmm.zig");
 const math = @import("../../../math.zig");
