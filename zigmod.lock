@@ -1,5 +1,5 @@
 2
-git https://github.com/kivikakk/dtb.zig commit-29f7364b2b475afdd5aab81fdf76fd62b8fb666c
-git https://github.com/leap0x7b/limine commit-b54c54a62c9f0ec1b5d474640b62b0da30f75636
-git https://github.com/leecannon/zig-sbi commit-32f91b46b60cef2a3d174e23d02d25ede797cbb4
-git https://github.com/limine-bootloader/limine commit-e8489a40547611f6b517b4263ca5c4b11e622e26
+git https://github.com/kivikakk/dtb.zig commit-f8b0e18c1ade81e6cb9153f07e52af4dd50153fa
+git https://github.com/leap0x7b/limine commit-c7cddda13357d58da9b348e9a7adaf9955d9233a
+git https://github.com/leecannon/zig-sbi commit-005412ec3e897726eadfdcb40b26ca1fab1aa343
+git https://github.com/limine-bootloader/limine commit-024565f6a7e8178107b3afc8459055db08937169
