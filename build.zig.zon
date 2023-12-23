@@ -1,0 +1,15 @@
+.{
+    .name = "ydin",
+    .version = "0.1.0",
+    .dependencies = .{
+        .limine = .{
+            .url = "https://github.com/kora-org/limine/archive/6ef01c114e8f485d1c2afc829747b017fcbf157c.tar.gz",
+            .hash = "1220645b91741bff36372900c9cc4f01c8b946dc283b82996a0d51d401f6f3c99ee7",
+        },
+        .limine_bootloader = .{
+            .url = "https://github.com/limine-bootloader/limine/archive/refs/tags/v6.20231216.0-binary.tar.gz",
+            .hash = "1220371799d582905235332678a57bcb3791b44e4b2fd1785fc3385791c930582d8b",
+        },
+    },
+    .paths = .{""},
+}

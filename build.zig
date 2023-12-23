@@ -1,9 +1,8 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Builder = std.build.Builder;
+const Builder = std.Build.Builder;
 const Arch = std.Target.Cpu.Arch;
 const CrossTarget = std.zig.CrossTarget;
-const deps = @import("deps.zig");
 
 const kora_version = std.SemanticVersion{
     .major = 0,
@@ -14,9 +13,11 @@ const kora_version = std.SemanticVersion{
 pub fn build(b: *Builder) !void {
     const arch = b.option(Arch, "arch", "The CPU architecture to build for") orelse .x86_64;
     const target = try genTarget(arch);
+    const limine = b.dependency("limine", .{});
+    const limine_bootloader = b.dependency("limine_bootloader", .{});
 
-    const ydin = try buildYdin(b, target);
-    const iso = try buildLimineIso(b, ydin);
+    const ydin = try buildYdin(b, target, limine);
+    const iso = try buildLimineIso(b, ydin, limine_bootloader);
     const qemu = try runIsoQemu(b, iso, arch);
     _ = qemu;
 }
@@ -45,17 +46,18 @@ fn genTarget(arch: Arch) !CrossTarget {
     return target;
 }
 
-fn buildYdin(b: *Builder, target: CrossTarget) !*std.build.LibExeObjStep {
+fn buildYdin(b: *Builder, target: CrossTarget, limine: *std.Build.Dependency) !*std.Build.Step.Compile {
     const optimize = b.standardOptimizeOption(.{});
     const exe_options = b.addOptions();
 
-    // From zls
+    // From https://github.com/zigtools/zls
     const version = v: {
         const version_string = b.fmt("{d}.{d}.{d}", .{ kora_version.major, kora_version.minor, kora_version.patch });
+        const build_root_path = b.build_root.path orelse ".";
 
         var code: u8 = undefined;
-        const git_describe_untrimmed = b.execAllowFail(&[_][]const u8{
-            "git", "-C", b.build_root.path.?, "describe", "--match", "*.*.*", "--tags",
+        const git_describe_untrimmed = b.runAllowFail(&[_][]const u8{
+            "git", "-C", build_root_path, "describe", "--match", "*.*.*", "--tags",
         }, &code, .Ignore) catch break :v version_string;
 
         const git_describe = std.mem.trim(u8, git_describe_untrimmed, " \n\r");
@@ -73,7 +75,7 @@ fn buildYdin(b: *Builder, target: CrossTarget) !*std.build.LibExeObjStep {
                 const commit_height = it.next().?;
                 const commit_id = it.next().?;
 
-                const ancestor_ver = std.SemanticVersion.parse(tagged_ancestor) catch unreachable;
+                const ancestor_ver = try std.SemanticVersion.parse(tagged_ancestor);
                 std.debug.assert(kora_version.order(ancestor_ver) == .gt); // version must be greater than its previous version
                 std.debug.assert(std.mem.startsWith(u8, commit_id, "g")); // commit hash is prefixed with a 'g'
 
@@ -116,7 +118,6 @@ fn buildYdin(b: *Builder, target: CrossTarget) !*std.build.LibExeObjStep {
     //        },
     //    },
     //});
-    deps.addAllTo(ydin);
     ydin.addOptions("build_options", exe_options);
     ydin.setLinkerScriptPath(.{
         .path = switch (target.cpu_arch.?) {
@@ -126,51 +127,57 @@ fn buildYdin(b: *Builder, target: CrossTarget) !*std.build.LibExeObjStep {
             else => return error.UnsupportedArchitecture,
         },
     });
-    b.installArtifact(ydin);
+    ydin.addModule("limine", limine.module("limine"));
 
+    b.installArtifact(ydin);
     return ydin;
 }
 
-fn buildLimineIso(b: *Builder, ydin: *std.build.LibExeObjStep) !*std.build.RunStep {
+fn buildLimineIso(b: *Builder, ydin: *std.Build.Step.Compile, limine: *std.Build.Dependency) !*std.Build.RunStep {
     _ = ydin;
-    const limine_path = deps.package_data._limine.directory;
-    const limine_install = switch (builtin.os.tag) {
-        .linux => "limine-deploy",
-        .windows => "limine-deploy.exe",
-        else => return error.UnsupportedOs,
-    };
+    const limine_path = limine.path(".");
+    const target = b.standardTargetOptions(.{});
+    const limine_exe = b.addExecutable(.{
+        .name = "limine-deploy",
+        .target = target,
+        .optimize = .ReleaseSafe,
+    });
+    limine_exe.addCSourceFile(.{ .file = limine.path("limine.c"), .flags = &[_][]const u8{"-std=c99"} });
+    limine_exe.linkLibC();
+    const limine_exe_run = b.addRunArtifact(limine_exe);
 
     const cmd = &[_][]const u8{
         // zig fmt: off
         "/bin/sh", "-c",
         try std.mem.concat(b.allocator, u8, &[_][]const u8{
             "mkdir -p zig-out/iso/root/EFI/BOOT && ",
-            "make -C ", limine_path, " && ",
             "cp zig-out/bin/vmydin zig-out/iso/root && ",
             "cp src/arch/x86_64/boot/limine.cfg zig-out/iso/root && ",
-            "cp ", limine_path, "/limine.sys ",
-                   limine_path, "/limine-cd.bin ",
-                   limine_path, "/limine-cd-efi.bin ",
+            "cp ", limine_path.getPath(b), "/limine.sys ",
+                   limine_path.getPath(b), "/limine-cd.bin ",
+                   limine_path.getPath(b), "/limine-cd-efi.bin ",
                    "zig-out/iso/root && ",
-            "cp ", limine_path, "/BOOTX64.EFI ",
-                   limine_path, "/BOOTAA64.EFI ",
-                   limine_path, "/BOOTRISCV64.EFI ",
+            "cp ", limine_path.getPath(b), "/BOOTX64.EFI ",
+                   limine_path.getPath(b), "/BOOTAA64.EFI ",
+                   limine_path.getPath(b), "/BOOTRISCV64.EFI ",
                    "zig-out/iso/root/EFI/BOOT && ",
             "xorriso -as mkisofs -quiet -b limine-cd.bin ",
                 "-no-emul-boot -boot-load-size 4 -boot-info-table ",
                 "--efi-boot limine-cd-efi.bin ",
                 "-efi-boot-part --efi-boot-image --protective-msdos-label ",
                 "zig-out/iso/root -o zig-out/iso/kora.iso && ",
-            limine_path, "/", limine_install, " ", "zig-out/iso/kora.iso",
-        // zig fmt: on
         }),
+        // zig fmt: on
     };
 
     const iso_cmd = b.addSystemCommand(cmd);
     iso_cmd.step.dependOn(b.getInstallStep());
 
+    _ = limine_exe_run.addOutputFileArg("kora.iso");
+    limine_exe_run.step.dependOn(&iso_cmd.step);
+
     const iso_step = b.step("iso", "Generate a bootable Limine ISO file");
-    iso_step.dependOn(&iso_cmd.step);
+    iso_step.dependOn(&limine_exe_run.step);
 
     return iso_cmd;
 }
@@ -194,7 +201,7 @@ fn edk2FileName(b: *Builder, arch: Arch) ![]const u8 {
     return std.mem.concat(b.allocator, u8, &[_][]const u8{ "zig-cache/edk2-", @tagName(arch), ".fd" });
 }
 
-fn runIsoQemu(b: *Builder, iso: *std.build.RunStep, arch: Arch) !*std.build.RunStep {
+fn runIsoQemu(b: *Builder, iso: *std.Build.RunStep, arch: Arch) !*std.Build.RunStep {
     _ = std.fs.cwd().statFile(try edk2FileName(b, arch)) catch try downloadEdk2(b, arch);
 
     const qemu_executable = switch (arch) {
@@ -245,7 +252,7 @@ fn runIsoQemu(b: *Builder, iso: *std.build.RunStep, arch: Arch) !*std.build.RunS
     return qemu_iso_cmd;
 }
 
-fn runYdinQemu(b: *Builder, ydin: *std.build.LibExeObjStep, arch: Arch) !*std.build.RunStep {
+fn runYdinQemu(b: *Builder, ydin: *std.Build.Step.Compile, arch: Arch) !*std.Build.RunStep {
     const qemu_executable = switch (arch) {
         .x86_64 => "qemu-system-x86_64",
         .aarch64 => "qemu-system-aarch64",

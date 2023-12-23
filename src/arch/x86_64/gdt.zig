@@ -6,7 +6,7 @@ pub const Gdt = extern struct {
     tss: Tss.Entry,
 
     pub fn flush(gdtr: arch.Descriptor) void {
-        var gs_base = arch.rdmsr(0xc0000101);
+        const gs_base = arch.rdmsr(0xc0000101);
 
         asm volatile (
             \\lgdt %[gdtr]
@@ -52,7 +52,7 @@ pub const Tss = extern struct {
     iopb_offset: u16,
 
     pub fn init(self: *Self) void {
-        var addr: u64 = @intFromPtr(self);
+        const addr: u64 = @intFromPtr(self);
 
         gdt.tss.base_low = @as(u16, @truncate(addr));
         gdt.tss.base_mid = @as(u8, @truncate(addr >> 16));
@@ -70,7 +70,7 @@ pub const Tss = extern struct {
     }
 };
 
-var gdt: Gdt = .{
+const gdt: Gdt = .{
     .entries = .{
         // null entry
         0x0000000000000000,
@@ -102,7 +102,7 @@ var gdt: Gdt = .{
 };
 
 pub fn init() void {
-    var descriptor = arch.Descriptor{
+    const descriptor = arch.Descriptor{
         .size = @sizeOf(Gdt) - 1,
         .ptr = @intFromPtr(&gdt),
     };

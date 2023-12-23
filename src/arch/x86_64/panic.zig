@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const limine = @import("limine");
-const arch = @import("../x86_64.zig");
+const arch = @import("../../arch.zig");
 
 pub export var kernel_file_request: limine.KernelFile.Request = .{};
 

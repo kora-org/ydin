@@ -36,7 +36,7 @@ pub const Frame = extern struct {
         log_func("R13: {X:0>16} R14: {X:0>16} R15: {X:0>16}", .{ self.r13, self.r14, self.r15 });
         log_func("RSP: {X:0>16} RIP: {X:0>16} CS:  {X:0>16}", .{ self.rsp, self.rip, self.cs });
 
-        var cr2 = asm volatile ("mov %%cr2, %[out]"
+        const cr2 = asm volatile ("mov %%cr2, %[out]"
             : [out] "=r" (-> u64),
             :
             : "memory"
@@ -55,7 +55,7 @@ const Entry = packed struct {
     _reserved: u32 = 0,
 
     fn init(stub: Stub, ist: u8) Entry {
-        var addr: u64 = @intFromPtr(stub);
+        const addr: u64 = @intFromPtr(stub);
 
         return Entry{
             .base_low = @as(u16, @truncate(addr)),

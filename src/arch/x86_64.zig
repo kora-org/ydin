@@ -5,7 +5,7 @@ pub const framebuffer = @import("x86_64/framebuffer.zig");
 pub const acpi = @import("x86_64/acpi.zig");
 
 pub fn interruptsEnabled() bool {
-    var eflags = asm volatile (
+    const eflags = asm volatile (
         \\pushf
         \\pop %[result]
         : [result] "=r" (-> u64),
@@ -41,7 +41,7 @@ pub const Spinlock = struct {
     pub fn lock(self: *Spinlock) void {
         _ = self.refcount.fetchAdd(1, .Monotonic);
 
-        var current = interruptsEnabled();
+        const current = interruptsEnabled();
         disableInterrupts();
 
         while (true) {
