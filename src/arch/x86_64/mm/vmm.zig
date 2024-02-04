@@ -33,8 +33,8 @@ pub fn init() void {
     };
 
     if (kernel_address_request.response) |kernel_address| {
-        var pbase: usize = kernel_address.physical_base;
-        var vbase: usize = kernel_address.virtual_base;
+        const pbase: usize = kernel_address.physical_base;
+        const vbase: usize = kernel_address.virtual_base;
 
         var i: usize = 0;
         while (i < (0x400 * 0x1000)) : (i += 0x1000)
@@ -51,10 +51,10 @@ pub fn init() void {
             continue;
         }
 
-        var base: usize = std.mem.alignBackward(ent.base, 0x200000);
+        const base: usize = std.mem.alignBackward(u64, ent.base, 0x200000);
         var i: usize = 0;
 
-        while (i < std.mem.alignForward(ent.length, 0x200000)) : (i += 0x200000)
+        while (i < std.mem.alignForward(u64, ent.length, 0x200000)) : (i += 0x200000)
             pagemap.mapPage(page_flags, (base + i) + pmm.hhdm_response.offset, base + i, true);
     }
 
@@ -85,7 +85,7 @@ pub const Pagemap = struct {
     pub fn mapPage(self: *Self, flags: PageFlags, virt: u64, phys: u64, huge: bool) void {
         var root: ?[*]u64 = @as([*]u64, @ptrFromInt(self.root + pmm.hhdm_response.offset));
 
-        var indices: [4]u64 = [_]u64{
+        const indices: [4]u64 = [_]u64{
             genIndex(virt, 39), genIndex(virt, 30),
             genIndex(virt, 21), genIndex(virt, 12),
         };
@@ -107,7 +107,7 @@ pub const Pagemap = struct {
     pub fn unmapPage(self: *Self, virt: u64) void {
         var root: ?[*]u64 = @as([*]u64, @ptrFromInt(self.root + pmm.hhdm_response.offset));
 
-        var indices: [4]u64 = [_]u64{
+        const indices: [4]u64 = [_]u64{
             genIndex(virt, 39), genIndex(virt, 30),
             genIndex(virt, 21), genIndex(virt, 12),
         };
@@ -146,7 +146,7 @@ fn getNextLevel(level: [*]u64, index: usize, create: bool) ?[*]u64 {
 
 fn createPte(flags: PageFlags, phys_ptr: u64, huge: bool) u64 {
     var result: u64 = 1;
-    var pat_bit: u64 = if (huge) (1 << 12) else (1 << 7);
+    const pat_bit: u64 = if (huge) (1 << 12) else (1 << 7);
 
     if (flags.write) result |= (1 << 1);
     if (!flags.exec) result |= (1 << 63);

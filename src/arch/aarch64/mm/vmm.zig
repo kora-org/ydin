@@ -33,8 +33,8 @@ pub fn init() void {
     };
 
     if (kernel_address_request.response) |kernel_address| {
-        var pbase: usize = kernel_address.physical_base;
-        var vbase: usize = kernel_address.virtual_base;
+        const pbase: usize = kernel_address.physical_base;
+        const vbase: usize = kernel_address.virtual_base;
 
         var i: usize = 0;
         while (i < (0x400 * 0x1000)) : (i += 0x1000)
@@ -51,7 +51,7 @@ pub fn init() void {
             continue;
         }
 
-        var base: usize = std.mem.alignBackward(ent.base, 0x200000);
+        const base: usize = std.mem.alignBackward(ent.base, 0x200000);
         var i: usize = 0;
 
         while (i < std.mem.alignForward(ent.length, 0x200000)) : (i += 0x200000)
@@ -95,7 +95,7 @@ pub const Pagemap = struct {
         const ttbr = if ((virt & (1 << 63)) == 1) self.root.ttbr1 else self.root.ttbr0;
         var root: ?[*]u64 = @as([*]u64, @ptrFromInt(ttbr + pmm.hhdm_response.offset));
 
-        var indices: [4]u64 = [_]u64{
+        const indices: [4]u64 = [_]u64{
             genIndex(virt, 39), genIndex(virt, 30),
             genIndex(virt, 21), genIndex(virt, 12),
         };
@@ -118,7 +118,7 @@ pub const Pagemap = struct {
         const ttbr = if ((virt & (1 << 63)) == 1) self.root.ttbr1 else self.root.ttbr0;
         var root: ?[*]u64 = @as([*]u64, @ptrFromInt(ttbr + pmm.hhdm_response.offset));
 
-        var indices: [4]u64 = [_]u64{
+        const indices: [4]u64 = [_]u64{
             genIndex(virt, 39), genIndex(virt, 30),
             genIndex(virt, 21), genIndex(virt, 12),
         };

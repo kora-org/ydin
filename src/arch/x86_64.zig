@@ -1,5 +1,7 @@
 const std = @import("std");
 
+pub const main = @import("x86_64/main.zig");
+pub const panic = @import("x86_64/panic.zig");
 pub const mm = @import("x86_64/mm.zig");
 pub const framebuffer = @import("x86_64/framebuffer.zig");
 pub const acpi = @import("x86_64/acpi.zig");
@@ -34,8 +36,8 @@ pub fn halt() void {
 }
 
 pub const Spinlock = struct {
-    lock_bits: std.atomic.Atomic(u32) = .{ .value = 0 },
-    refcount: std.atomic.Atomic(usize) = .{ .value = 0 },
+    lock_bits: std.atomic.Value(u32) = .{ .raw = 0 },
+    refcount: std.atomic.Value(usize) = .{ .raw = 0 },
     interrupts: bool = false,
 
     pub fn lock(self: *Spinlock) void {
@@ -60,13 +62,13 @@ pub const Spinlock = struct {
         }
 
         _ = self.refcount.fetchSub(1, .Monotonic);
-        std.atomic.compilerFence(.Acquire);
+        @fence(.Acquire);
         self.interrupts = current;
     }
 
     pub fn unlock(self: *Spinlock) void {
         self.lock_bits.store(0, .Release);
-        std.atomic.compilerFence(.Release);
+        @fence(.Release);
 
         if (self.interrupts)
             enableInterrupts()

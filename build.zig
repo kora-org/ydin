@@ -1,6 +1,5 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Builder = std.Build.Builder;
 const Arch = std.Target.Cpu.Arch;
 const CrossTarget = std.zig.CrossTarget;
 
@@ -10,7 +9,7 @@ const kora_version = std.SemanticVersion{
     .patch = 0,
 };
 
-pub fn build(b: *Builder) !void {
+pub fn build(b: *std.Build) !void {
     const arch = b.option(Arch, "arch", "The CPU architecture to build for") orelse .x86_64;
     const target = try genTarget(arch);
     const limine = b.dependency("limine", .{});
@@ -46,7 +45,7 @@ fn genTarget(arch: Arch) !CrossTarget {
     return target;
 }
 
-fn buildYdin(b: *Builder, target: CrossTarget, limine: *std.Build.Dependency) !*std.Build.Step.Compile {
+fn buildYdin(b: *std.Build, target: CrossTarget, limine: *std.Build.Dependency) !*std.Build.Step.Compile {
     const optimize = b.standardOptimizeOption(.{});
     const exe_options = b.addOptions();
 
@@ -92,33 +91,17 @@ fn buildYdin(b: *Builder, target: CrossTarget, limine: *std.Build.Dependency) !*
 
     const ydin = b.addExecutable(.{
         .name = "vmydin",
-        .root_source_file = .{
-            .path = switch (target.cpu_arch.?) {
-                .x86_64 => "src/arch/x86_64/main.zig",
-                .aarch64 => "src/arch/aarch64/main.zig",
-                .riscv64 => "src/arch/riscv64/main.zig",
-                else => return error.UnsupportedArchitecture,
-            },
-        },
-        .target = target,
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = b.resolveTargetQuery(target),
         .optimize = optimize,
+        .code_model = switch (target.cpu_arch.?) {
+            .x86_64 => .kernel,
+            .aarch64 => .small,
+            .riscv64 => .medium,
+            else => return error.UnsupportedArchitecture,
+        },
     });
-
-    ydin.code_model = switch (target.cpu_arch.?) {
-        .x86_64 => .kernel,
-        .aarch64 => .small,
-        .riscv64 => .medium,
-        else => return error.UnsupportedArchitecture,
-    };
-    //ydin.addAnonymousModule("arch", .{
-    //    .source_file = .{
-    //        .path = switch (target.cpu_arch.?) {
-    //            .x86_64 => "src/arch/x86_64.zig",
-    //            else => return error.UnsupportedArchitecture,
-    //        },
-    //    },
-    //});
-    ydin.addOptions("build_options", exe_options);
+    ydin.root_module.addOptions("build_options", exe_options);
     ydin.setLinkerScriptPath(.{
         .path = switch (target.cpu_arch.?) {
             .x86_64 => "src/arch/x86_64/linker.ld",
@@ -127,13 +110,13 @@ fn buildYdin(b: *Builder, target: CrossTarget, limine: *std.Build.Dependency) !*
             else => return error.UnsupportedArchitecture,
         },
     });
-    ydin.addModule("limine", limine.module("limine"));
+    ydin.root_module.addImport("limine", limine.module("limine"));
 
     b.installArtifact(ydin);
     return ydin;
 }
 
-fn buildLimineIso(b: *Builder, ydin: *std.Build.Step.Compile, limine: *std.Build.Dependency) !*std.Build.RunStep {
+fn buildLimineIso(b: *std.Build, ydin: *std.Build.Step.Compile, limine: *std.Build.Dependency) !*std.Build.Step.Run {
     _ = ydin;
     const limine_path = limine.path(".");
     const target = b.standardTargetOptions(.{});
@@ -153,19 +136,19 @@ fn buildLimineIso(b: *Builder, ydin: *std.Build.Step.Compile, limine: *std.Build
             "mkdir -p zig-out/iso/root/EFI/BOOT && ",
             "cp zig-out/bin/vmydin zig-out/iso/root && ",
             "cp src/arch/x86_64/boot/limine.cfg zig-out/iso/root && ",
-            "cp ", limine_path.getPath(b), "/limine.sys ",
-                   limine_path.getPath(b), "/limine-cd.bin ",
-                   limine_path.getPath(b), "/limine-cd-efi.bin ",
+            "cp ", limine_path.getPath(b), "/limine-bios.sys ",
+                   limine_path.getPath(b), "/limine-bios-cd.bin ",
+                   limine_path.getPath(b), "/limine-uefi-cd.bin ",
                    "zig-out/iso/root && ",
             "cp ", limine_path.getPath(b), "/BOOTX64.EFI ",
                    limine_path.getPath(b), "/BOOTAA64.EFI ",
                    limine_path.getPath(b), "/BOOTRISCV64.EFI ",
                    "zig-out/iso/root/EFI/BOOT && ",
-            "xorriso -as mkisofs -quiet -b limine-cd.bin ",
+            "xorriso -as mkisofs -quiet -b limine-bios-cd.bin ",
                 "-no-emul-boot -boot-load-size 4 -boot-info-table ",
-                "--efi-boot limine-cd-efi.bin ",
+                "--efi-boot limine-uefi-cd.bin ",
                 "-efi-boot-part --efi-boot-image --protective-msdos-label ",
-                "zig-out/iso/root -o zig-out/iso/kora.iso && ",
+                "zig-out/iso/root -o zig-out/iso/kora.iso",
         }),
         // zig fmt: on
     };
@@ -182,7 +165,7 @@ fn buildLimineIso(b: *Builder, ydin: *std.Build.Step.Compile, limine: *std.Build
     return iso_cmd;
 }
 
-fn downloadEdk2(b: *Builder, arch: Arch) !void {
+fn downloadEdk2(b: *std.Build, arch: Arch) !void {
     const link = switch (arch) {
         .x86_64 => "https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd",
         .aarch64 => "https://retrage.github.io/edk2-nightly/bin/RELEASEAARCH64_QEMU_EFI.fd",
@@ -194,14 +177,14 @@ fn downloadEdk2(b: *Builder, arch: Arch) !void {
     var child_proc = std.ChildProcess.init(cmd, b.allocator);
     try child_proc.spawn();
     const ret_val = try child_proc.wait();
-    try std.testing.expectEqual(ret_val, .{ .Exited = 0 });
+    try std.testing.expectEqual(ret_val, std.ChildProcess.Term{ .Exited = 0 });
 }
 
-fn edk2FileName(b: *Builder, arch: Arch) ![]const u8 {
+fn edk2FileName(b: *std.Build, arch: Arch) ![]const u8 {
     return std.mem.concat(b.allocator, u8, &[_][]const u8{ "zig-cache/edk2-", @tagName(arch), ".fd" });
 }
 
-fn runIsoQemu(b: *Builder, iso: *std.Build.RunStep, arch: Arch) !*std.Build.RunStep {
+fn runIsoQemu(b: *std.Build, iso: *std.Build.Step.Run, arch: Arch) !*std.Build.Step.Run {
     _ = std.fs.cwd().statFile(try edk2FileName(b, arch)) catch try downloadEdk2(b, arch);
 
     const qemu_executable = switch (arch) {
@@ -252,7 +235,7 @@ fn runIsoQemu(b: *Builder, iso: *std.Build.RunStep, arch: Arch) !*std.Build.RunS
     return qemu_iso_cmd;
 }
 
-fn runYdinQemu(b: *Builder, ydin: *std.Build.Step.Compile, arch: Arch) !*std.Build.RunStep {
+fn runYdinQemu(b: *std.Build, ydin: *std.Build.Step.Compile, arch: Arch) !*std.Build.Step.Run {
     const qemu_executable = switch (arch) {
         .x86_64 => "qemu-system-x86_64",
         .aarch64 => "qemu-system-aarch64",

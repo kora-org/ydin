@@ -19,7 +19,7 @@ pub const Psf1 = struct {
         var ret: Psf1 = undefined;
 
         ret.data = font;
-        ret.header = @as(*const Header, @ptrCast(@alignCast(@alignOf(*Header), ret.data)));
+        ret.header = @as(*const Header, @ptrCast(@alignCast(ret.data)));
         if (ret.header.magic != 0x0436)
             return error.InvalidMagic;
 
@@ -65,7 +65,7 @@ pub const Psf2 = struct {
         var ret: Psf2 = undefined;
 
         ret.data = font;
-        ret.header = @as(*const Header, @ptrCast(@alignCast(@alignOf(*Header), ret.data)));
+        ret.header = @as(*const Header, @ptrCast(@alignCast(ret.data)));
         if (ret.header.magic != 0x864ab572)
             return error.InvalidMagic;
 

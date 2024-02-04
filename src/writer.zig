@@ -17,7 +17,7 @@ pub fn init() void {
     serial.init();
 }
 
-pub fn write(_: *anyopaque, bytes: []const u8) !usize {
+pub fn write(_: *anyopaque, bytes: []const u8) anyerror!usize {
     const serial = switch (builtin.cpu.arch) {
         .x86_64 => DefaultWriter{},
         .aarch64 => try DefaultWriter(),

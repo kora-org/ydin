@@ -140,8 +140,8 @@ pub fn getTable(signature: []const u8) ?*Header {
 }
 
 pub fn pmSleep(us: u64) void {
-    var shift: u64 = @as(u64, 1) << @as(u6, @truncate(timer_bits));
-    var target = (us * 3) + ((us * 5) / 10) + ((us * 8) / 100);
+    const shift: u64 = @as(u64, 1) << @as(u6, @truncate(timer_bits));
+    const target = (us * 3) + ((us * 5) / 10) + ((us * 8) / 100);
 
     var n: u64 = target / shift;
     var remaining: u64 = target % shift;
@@ -172,7 +172,7 @@ pub fn init() void {
     if (rsdp_request.response) |rsdp|
         rsdp_response = rsdp.*;
 
-    var xsdp = @as(*align(1) const Xsdp, @ptrFromInt(rsdp_response.address));
+    const xsdp = @as(*align(1) const Xsdp, @ptrFromInt(rsdp_response.address));
 
     if (xsdp.revision >= 2 and xsdp.xsdt != 0)
         xsdt = @as(*Header, @ptrFromInt(xsdp.xsdt + pmm.hhdm_response.offset))
@@ -182,18 +182,18 @@ pub fn init() void {
     log.debug("ACPI tables:", .{});
     if (xsdt) |x| {
         for (getEntries(u64, x)) |ent| {
-            var entry = @as(*Header, @ptrFromInt(ent + pmm.hhdm_response.offset));
+            const entry = @as(*Header, @ptrFromInt(ent + pmm.hhdm_response.offset));
             printTable(entry);
         }
     } else {
         for (getEntries(u32, rsdt.?)) |ent| {
-            var entry = @as(*Header, @ptrFromInt(ent + pmm.hhdm_response.offset));
+            const entry = @as(*Header, @ptrFromInt(ent + pmm.hhdm_response.offset));
             printTable(entry);
         }
     }
 
     if (getTable("FACP")) |fadt_sdt| {
-        var fadt = @as(*align(1) const Fadt, @ptrCast(fadt_sdt.getContents()));
+        const fadt = @as(*align(1) const Fadt, @ptrCast(fadt_sdt.getContents()));
 
         if (xsdp.revision >= 2 and fadt.x_pm_timer_blk.base_type == 0) {
             timer_block = fadt.x_pm_timer_blk;

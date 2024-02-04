@@ -12,15 +12,15 @@ const Bitmap = struct {
     size: usize,
 
     pub fn set(self: Self, bit: u64) void {
-        self.bits[bit / 8] |= @as(u8, 1) << @as(u3, bit % 8);
+        self.bits[bit / 8] |= @as(u8, 1) << @as(u3, @truncate(bit % 8));
     }
 
     pub fn unset(self: Self, bit: u64) void {
-        self.bits[bit / 8] &= ~(@as(u8, 1) << @as(u3, bit % 8));
+        self.bits[bit / 8] &= ~(@as(u8, 1) << @as(u3, @truncate(bit % 8)));
     }
 
     pub fn check(self: Self, bit: u64) bool {
-        return (self.bits[bit / 8] & (@as(u8, 1) << @as(u3, bit % 8))) != 0;
+        return (self.bits[bit / 8] & (@as(u8, 1) << @as(u3, @truncate(bit % 8)))) != 0;
     }
 };
 
@@ -45,7 +45,7 @@ pub fn init() void {
     }
 
     var highest_memory: u64 = 0;
-    var entries = memmap_response.getEntries();
+    const entries = memmap_response.getEntries();
 
     // Calculate how big should the memory map be.
     log.debug("Memory map layout:", .{});
@@ -62,7 +62,7 @@ pub fn init() void {
     // Calculate the needed size for the bitmap in bytes and align it to page size.
     page_count = highest_memory / std.mem.page_size;
     used_pages = page_count;
-    bitmap.size = std.mem.alignForward(page_count / 8, std.mem.page_size);
+    bitmap.size = std.mem.alignForward(usize, page_count / 8, std.mem.page_size);
 
     log.debug("Used pages: {}", .{used_pages});
     log.debug("Bitmap size: {} KB", .{bitmap.size / 1024});

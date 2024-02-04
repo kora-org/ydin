@@ -17,11 +17,11 @@ pub const Slab = struct {
         self.first_free = @as([*]u8, @ptrFromInt(@intFromPtr(pmm.allocNz(1)) + pmm.hhdm_response.offset));
 
         const size = std.mem.page_size - math.alignUp(@sizeOf(Header), entry_size);
-        var slab_ptr = @as(*Header, @ptrCast(@alignCast(@alignOf(*Header), self.first_free)));
+        var slab_ptr = @as(*Header, @ptrCast(@alignCast(self.first_free)));
         slab_ptr.slab = self;
         self.first_free = @as([*]u8, @ptrFromInt(@intFromPtr(self.first_free) + math.alignUp(@sizeOf(Header), entry_size)));
 
-        var array = @as([*]*u8, @ptrCast(@alignCast(@alignOf([*]*u8), self.first_free)));
+        var array = @as([*]*u8, @ptrCast(@alignCast(self.first_free)));
         const max = size / entry_size - 1;
         const fact = entry_size / @sizeOf(*u8);
 
@@ -105,7 +105,7 @@ pub fn alloc(_: *anyopaque, len: usize, _: u8, _: usize) ?[*]u8 {
         return null;
 
     ret = @as([*]u8, @ptrFromInt(@intFromPtr(ret.?) + pmm.hhdm_response.offset));
-    const metadata = @as(*AllocMetadata, @ptrCast(@alignCast(@alignOf(AllocMetadata), ret.?)));
+    const metadata = @as(*AllocMetadata, @ptrCast(@alignCast(ret.?)));
 
     metadata.pages = page_count;
     metadata.size = len;
@@ -140,7 +140,7 @@ pub fn _resize(buf: []u8, new_size: usize) []u8 {
             return new_buf.?[0..metadata.size];
     }
 
-    var header = @as(*Slab.Header, @ptrFromInt(@intFromPtr(buf.ptr) & ~@as(u16, @intCast(0xfff))));
+    const header = @as(*Slab.Header, @ptrFromInt(@intFromPtr(buf.ptr) & ~@as(u16, @intCast(0xfff))));
     var slab = header.slab;
 
     if (new_size > slab.entry_size) {
@@ -171,12 +171,12 @@ pub fn free(_: *anyopaque, buf: []u8, _: u8, _: usize) void {
         return;
 
     if ((@intFromPtr(buf.ptr) & 0xfff) == 0) {
-        var metadata = @as(*AllocMetadata, @ptrFromInt(@intFromPtr(buf.ptr) - std.mem.page_size));
+        const metadata = @as(*AllocMetadata, @ptrFromInt(@intFromPtr(buf.ptr) - std.mem.page_size));
         pmm.free(@as([*]u8, @ptrFromInt(@intFromPtr(metadata) - pmm.hhdm_response.offset)), metadata.pages + 1);
         return;
     }
 
-    var header = @as(*Slab.Header, @ptrFromInt(@intFromPtr(buf.ptr) & ~@as(u16, @intCast(0xfff))));
+    const header = @as(*Slab.Header, @ptrFromInt(@intFromPtr(buf.ptr) & ~@as(u16, @intCast(0xfff))));
     var slab = header.slab;
     slab.free(buf.ptr);
 }

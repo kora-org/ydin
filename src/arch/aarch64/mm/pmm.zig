@@ -45,7 +45,7 @@ pub fn init() void {
     }
 
     var highest_memory: u64 = 0;
-    var entries = memmap_response.getEntries();
+    const entries = memmap_response.getEntries();
 
     // Calculate how big should the memory map be.
     log.debug("Memory map layout:", .{});

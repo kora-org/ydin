@@ -140,7 +140,7 @@ pub fn _resize(buf: []u8, new_size: usize) []u8 {
             return new_buf.?[0..metadata.size];
     }
 
-    var header = @as(*Slab.Header, @ptrFromInt(@intFromPtr(buf.ptr) & ~@as(u16, @intCast(0xfff))));
+    const header = @as(*Slab.Header, @ptrFromInt(@intFromPtr(buf.ptr) & ~@as(u16, @intCast(0xfff))));
     var slab = header.slab;
 
     if (new_size > slab.entry_size) {
@@ -171,12 +171,12 @@ pub fn free(_: *anyopaque, buf: []u8, _: u8, _: usize) void {
         return;
 
     if ((@intFromPtr(buf.ptr) & 0xfff) == 0) {
-        var metadata = @as(*AllocMetadata, @ptrFromInt(@intFromPtr(buf.ptr) - std.mem.page_size));
+        const metadata = @as(*AllocMetadata, @ptrFromInt(@intFromPtr(buf.ptr) - std.mem.page_size));
         pmm.free(@as([*]u8, @ptrFromInt(@intFromPtr(metadata) - pmm.hhdm_response.offset)), metadata.pages + 1);
         return;
     }
 
-    var header = @as(*Slab.Header, @ptrFromInt(@intFromPtr(buf.ptr) & ~@as(u16, @intCast(0xfff))));
+    const header = @as(*Slab.Header, @ptrFromInt(@intFromPtr(buf.ptr) & ~@as(u16, @intCast(0xfff))));
     var slab = header.slab;
     slab.free(buf.ptr);
 }
