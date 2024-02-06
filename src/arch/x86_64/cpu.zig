@@ -31,7 +31,7 @@ pub fn init() void {
     // enable syscall
     arch.wrmsr(0xC0000081, (@as(u64, 0x30 | 0b11) << 48) | ((@as(u64, 0x28) << 32)));
     arch.wrmsr(0xC0000082, @intFromPtr(&syscallEntry));
-    arch.wrmsr(0xC0000080, arch.rdmsr(0xC0000080) | 1);
+    arch.wrmsr(0xC0000080, arch.rdmsr(0xc0000080) | 1);
     arch.wrmsr(0xC0000084, ~@as(u32, 2));
 }
 

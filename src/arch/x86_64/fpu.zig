@@ -46,8 +46,8 @@ var storage_align: usize = 0;
 var mode: SaveType = undefined;
 
 inline fn wrxcr(comptime reg: usize, value: u64) void {
-    var edx: u32 = @as(u32, @truncate(value >> 32));
-    var eax: u32 = @as(u32, @truncate(value));
+    const edx: u32 = @as(u32, @truncate(value >> 32));
+    const eax: u32 = @as(u32, @truncate(value));
 
     asm volatile ("xsetbv"
         :
@@ -61,8 +61,8 @@ inline fn wrxcr(comptime reg: usize, value: u64) void {
 pub fn restore(save_area: []const u8) void {
     std.debug.assert(@intFromPtr(&save_area) % storage_align == 0);
 
-    var rbfm: u32 = 0xffffffff;
-    var rbfm_high: u32 = 0xffffffff;
+    const rbfm: u32 = 0xffffffff;
+    const rbfm_high: u32 = 0xffffffff;
 
     switch (mode) {
         .xsave, .xsavec, .xsaveopt => {
@@ -96,8 +96,8 @@ pub fn restore(save_area: []const u8) void {
 pub fn save(save_area: []const u8) void {
     std.debug.assert(@intFromPtr(&save_area) % storage_align == 0);
 
-    var rbfm: u32 = 0xffffffff;
-    var rbfm_high: u32 = 0xffffffff;
+    const rbfm: u32 = 0xffffffff;
+    const rbfm_high: u32 = 0xffffffff;
 
     switch (mode) {
         .xsave => {
@@ -173,7 +173,7 @@ pub fn init() void {
         result = arch.cpuid(0x0d, 0);
 
         if (smp.isBsp()) {
-            log.info("supported extensions bitmask: 0x{X}", .{result.eax});
+            log.debug("Supported extensions bitmask: 0x{x}", .{result.eax});
         }
 
         switch (mode) {
@@ -195,9 +195,6 @@ pub fn init() void {
     }
 
     if (smp.isBsp()) {
-        log.info(
-            "using \"{s}\" instruction (with size={}) for FPU context management",
-            .{ @tagName(mode), storage_size },
-        );
+        log.debug("Using \"{s}\" instruction (with size={}) for FPU context management", .{ @tagName(mode), storage_size });
     }
 }

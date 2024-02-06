@@ -43,13 +43,21 @@ pub const Tss = extern struct {
         _reserved: u32 = 0,
     };
 
-    _reserved0: u32 = 0,
-    rsp: [3]u64,
-    _reserved1: u64 = 0,
-    ist: [7]u64,
-    _reserved2: u64 = 0,
-    _reserved3: u16 = 0,
-    iopb_offset: u16,
+    _reserved0: u32 align(1) = 0,
+    rsp0: u64 align(1) = 0,
+    rsp1: u64 align(1) = 0,
+    rsp2: u64 align(1) = 0,
+    _reserved1: u64 align(1) = 0,
+    ist1: u64 align(1) = 0,
+    ist2: u64 align(1) = 0,
+    ist3: u64 align(1) = 0,
+    ist4: u64 align(1) = 0,
+    ist5: u64 align(1) = 0,
+    ist6: u64 align(1) = 0,
+    ist7: u64 align(1) = 0,
+    _reserved2: u64 align(1) = 0,
+    _reserved3: u16 align(1) = 0,
+    iopb_offset: u16 align(1) = 0,
 
     pub fn init(self: *Self) void {
         const addr: u64 = @intFromPtr(self);
@@ -70,7 +78,7 @@ pub const Tss = extern struct {
     }
 };
 
-const gdt: Gdt = .{
+var gdt: Gdt = .{
     .entries = .{
         // null entry
         0x0000000000000000,

@@ -1,5 +1,6 @@
 const std = @import("std");
 const arch = @import("../x86_64.zig");
+const sched = @import("sched.zig");
 const log = std.log.scoped(.interrupt);
 
 pub const Frame = extern struct {
@@ -87,7 +88,11 @@ pub fn init() void {
 
     if (!entries_generated) {
         for (genStubTable(), 0..) |stub, idx| {
-            entries[idx] = Entry.init(stub, 0);
+            if (idx == sched.TIMER_VECTOR) {
+                entries[idx] = Entry.init(stub, 1);
+            } else {
+                entries[idx] = Entry.init(stub, 0);
+            }
         }
 
         entries_generated = true;

@@ -1,10 +1,12 @@
 const std = @import("std");
 
+pub const cpu = @import("x86_64/cpu.zig");
 pub const main = @import("x86_64/main.zig");
 pub const panic = @import("x86_64/panic.zig");
 pub const mm = @import("x86_64/mm.zig");
 pub const framebuffer = @import("x86_64/framebuffer.zig");
 pub const acpi = @import("x86_64/acpi.zig");
+pub const smp = @import("x86_64/smp.zig");
 
 pub fn interruptsEnabled() bool {
     const eflags = asm volatile (
