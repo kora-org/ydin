@@ -58,14 +58,14 @@ pub const Psf2 = struct {
     };
 
     data: []const u8,
-    header: *const Header,
+    header: *align(1) const Header,
     unicode: std.StringArrayHashMap(usize),
 
     pub fn init(font: []const u8, allocator: std.mem.Allocator) !Psf2 {
         var ret: Psf2 = undefined;
 
         ret.data = font;
-        ret.header = @as(*const Header, @ptrCast(@alignCast(ret.data)));
+        ret.header = @as(*align(1) const Header, @ptrCast(ret.data));
         if (ret.header.magic != 0x864ab572)
             return error.InvalidMagic;
 
@@ -77,35 +77,24 @@ pub const Psf2 = struct {
 
         if (ret.header.flags == 1) {
             const table = ret.data[last_glyph_offset..];
-            var index: usize = 0;
-            var start: usize = 0;
-            var in_sequence = false;
-            for (table, 0..) |x, i| {
-                if ((x == 0xff) or (x == 0xfe)) {
-                    const slice = table[start..i];
-                    if (std.unicode.utf8ValidateSlice(slice)) {
-                        if (in_sequence) {
-                            try ret.unicode.put(slice, index);
-                        } else {
-                            for (slice) |c| {
-                                var buf = [1]u8{0} ** std.math.maxInt(u21);
-                                const len = try std.unicode.utf8Encode(c, buf[0..]);
-                                try ret.unicode.put(buf[0..len], index);
-                            }
-                        }
-                    }
-
-                    start = i + 1;
-                    in_sequence = true;
-                }
-                if (x == 0xff) {
-                    index += 1;
-                    in_sequence = false;
+            var table_iter = std.mem.splitScalar(u8, table, 0xFF);
+            var i: usize = 0;
+            while (table_iter.next()) |entry| : (i += 1) {
+                var j: usize = 0;
+                while (j < entry.len) : (j += 1) {
+                    const len: usize = std.unicode.utf8ByteSequenceLength(entry[j]) catch continue;
+                    const key = entry[j..][0..len];
+                    try ret.unicode.put(key, i);
+                    j += len;
                 }
             }
         }
 
         return ret;
+    }
+
+    pub fn deinit(self: *Psf2) void {
+        self.unicode.deinit();
     }
 
     pub fn getChar(self: *const Psf2, char: u21) ![]const u8 {
@@ -124,8 +113,8 @@ pub const Psf2 = struct {
     }
 
     pub fn getIndex(self: *const Psf2, index: usize) ![]const u8 {
-        //if (index >= self.header.length)
-        //    return error.OutOfBounds;
+        if (index >= self.header.length)
+            return error.OutOfBounds;
 
         const offset = self.header.header_size + index * self.header.glyph_size;
         return self.data[offset..(offset + self.header.glyph_size)];

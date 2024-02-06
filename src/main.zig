@@ -31,6 +31,24 @@ pub fn main() !void {
     arch.mm.pmm.init();
     arch.mm.vmm.init();
     arch.acpi.init();
-    arch.smp.init();
+    const file = @embedFile("./Tamzen6x12.psf");
+    var font = try psf.Psf2.init(file, arch.mm.slab.allocator);
+    defer font.deinit();
+    const char = try font.getChar('á');
+    const stride = (font.header.width + 7) / 8;
+    for (0..font.header.height) |y| {
+        for (0..font.header.width) |x| {
+            const byte: usize = y * stride + (x / 8);
+            const bit: usize = 7 - (x % 8);
+
+            if ((char[byte] & (@as(usize, 1) << @as(u6, @truncate(bit)))) == 0) {
+                try writer.writer.print("  ", .{});
+            } else {
+                try writer.writer.print("##", .{});
+            }
+        }
+        try writer.writer.print("\n", .{});
+    }
+    //arch.smp.init();
     @panic("test");
 }
