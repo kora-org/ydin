@@ -31,16 +31,14 @@ pub const Gdt = extern struct {
 };
 
 pub const Tss = extern struct {
-    const Self = @This();
-
-    pub const Entry = packed struct {
-        length: u16,
-        base_low: u16,
-        base_mid: u8,
-        flags: u16,
-        base_high: u8,
-        base_upper: u32,
-        _reserved: u32 = 0,
+    pub const Entry = extern struct {
+        length: u16 align(1),
+        base_low: u16 align(1),
+        base_mid: u8 align(1),
+        flags: u16 align(1),
+        base_high: u8 align(1),
+        base_upper: u32 align(1),
+        _reserved: u32 align(1) = 0,
     };
 
     _reserved0: u32 align(1) = 0,
@@ -59,7 +57,7 @@ pub const Tss = extern struct {
     _reserved3: u16 align(1) = 0,
     iopb_offset: u16 align(1) = 0,
 
-    pub fn init(self: *Self) void {
+    pub fn init(self: *Tss) void {
         const addr: u64 = @intFromPtr(self);
 
         gdt.tss.base_low = @as(u16, @truncate(addr));
@@ -69,7 +67,7 @@ pub const Tss = extern struct {
         gdt.tss.base_upper = @as(u32, @truncate(addr >> 32));
     }
 
-    pub fn flush(_: *Self) void {
+    pub fn flush(_: *Tss) void {
         asm volatile ("ltr %[tss]"
             :
             : [tss] "r" (@as(u16, 0x48)),

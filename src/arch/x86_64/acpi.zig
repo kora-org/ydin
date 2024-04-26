@@ -1,8 +1,8 @@
 const std = @import("std");
 const limine = @import("limine");
 const io = @import("io.zig");
-const mmio = @import("mmio.zig");
-const pmm = @import("mm/pmm.zig");
+const mmio = @import("../../mmio.zig");
+const pmm = @import("../../mm/pmm.zig");
 const log = std.log.scoped(.acpi);
 
 pub const GenericAddress = extern struct {

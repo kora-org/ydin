@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const limine = @import("limine");
-const arch = @import("../../arch.zig");
+const arch = @import("arch.zig");
 
 pub export var kernel_file_request: limine.KernelFile.Request = .{};
 
@@ -10,10 +10,9 @@ var debug_allocator = std.heap.FixedBufferAllocator.init(debug_allocator_bytes[0
 var debug_info: ?std.dwarf.DwarfInfo = null;
 
 pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace, return_address: ?usize) noreturn {
-    _ = return_address; // autofix
     std.log.err("Kernel panic: {s}", .{message});
 
-    // FIXME: currently page faults when loading debug infp
+    _ = return_address;
     //var stack_iterator = std.debug.StackIterator.init(return_address orelse @returnAddress(), @frameAddress());
     //if (builtin.mode == .Debug) init() catch |err|
     //    std.log.err("Failed to initialize debug info: {!}", .{err});
@@ -37,42 +36,24 @@ fn init() !void {
     errdefer debug_info = null;
 
     if (kernel_file_request.response) |response| {
-        const ptr = @as([*]const u8, @ptrFromInt(response.kernel_file.base));
+        const kernel_file = @as([*]const u8, @ptrFromInt(response.kernel_file.base));
+
+        var sections = std.dwarf.DwarfInfo.null_section_array;
+        sections[@intFromEnum(std.dwarf.DwarfSection.debug_info)] = try getSectionSlice(kernel_file, ".debug_info");
+        sections[@intFromEnum(std.dwarf.DwarfSection.debug_abbrev)] = try getSectionSlice(kernel_file, ".debug_abbrev");
+        sections[@intFromEnum(std.dwarf.DwarfSection.debug_str)] = try getSectionSlice(kernel_file, ".debug_str");
+        sections[@intFromEnum(std.dwarf.DwarfSection.debug_line)] = try getSectionSlice(kernel_file, ".debug_line");
+        sections[@intFromEnum(std.dwarf.DwarfSection.debug_ranges)] = try getSectionSlice(kernel_file, ".debug_ranges");
 
         debug_info = .{
             .endian = .little,
             .is_macho = false,
+            .sections = sections,
         };
-        setSection(&debug_info.?, .debug_frame, try getSectionSlice(ptr, ".debug_frame"), try getSectionAddress(ptr, ".debug_frame"));
-        setSection(&debug_info.?, .debug_info, try getSectionSlice(ptr, ".debug_info"), try getSectionAddress(ptr, ".debug_info"));
-        setSection(&debug_info.?, .debug_abbrev, try getSectionSlice(ptr, ".debug_abbrev"), try getSectionAddress(ptr, ".debug_abbrev"));
-        setSection(&debug_info.?, .debug_str, try getSectionSlice(ptr, ".debug_str"), try getSectionAddress(ptr, ".debug_str"));
-        setSection(&debug_info.?, .debug_line, try getSectionSlice(ptr, ".debug_line"), try getSectionAddress(ptr, ".debug_line"));
-        setSection(&debug_info.?, .debug_ranges, try getSectionSlice(ptr, ".debug_ranges"), try getSectionAddress(ptr, ".debug_ranges"));
-        setSection(&debug_info.?, .debug_addr, null, null);
-        setSection(&debug_info.?, .debug_names, null, null);
-        setSection(&debug_info.?, .debug_line_str, null, null);
-        setSection(&debug_info.?, .debug_str_offsets, null, null);
-        setSection(&debug_info.?, .debug_loclists, null, null);
-        setSection(&debug_info.?, .debug_rnglists, null, null);
 
         try std.dwarf.openDwarfDebugInfo(&debug_info.?, debug_allocator.allocator());
     } else {
         return error.NoKernelFile;
-    }
-}
-
-inline fn setSection(dwarf_info: *std.dwarf.DwarfInfo, section: std.dwarf.DwarfSection, section_data: ?[]const u8, section_address: ?u64) void {
-    if (section_data) |data| {
-        if (section_address) |address| {
-            dwarf_info.sections[@intFromEnum(section)] = .{
-                .data = data,
-                .virtual_address = address,
-                .owned = false,
-            };
-        }
-    } else {
-        dwarf_info.sections[@intFromEnum(section)] = null;
     }
 }
 
@@ -85,14 +66,10 @@ fn printSymbol(address: u64) void {
         const compile_unit = info.findCompileUnit(address) catch break :brk;
         const line_info = info.getLineNumberInfo(debug_allocator.allocator(), compile_unit.*, address) catch break :brk;
 
-        return printInfo(address, symbol_name, line_info.file_name, line_info.line);
+        std.log.err("  0x{x:0>16}: {s} at {s}:{d}:{d}", .{ address, symbol_name, line_info.file_name, line_info.line, line_info.column });
     }
 
-    printInfo(address, symbol_name, "???", 0);
-}
-
-fn printInfo(address: u64, symbol_name: []const u8, file_name: []const u8, line: usize) void {
-    std.log.err("  0x{x:0>16}: {s} at {s}:{d}", .{ address, symbol_name, file_name, line });
+    std.log.err("  0x{x:0>16}: {s} at ???:?:?", .{ address, symbol_name });
 }
 
 fn getSectionData(elf: [*]const u8, shdr: []const u8) []const u8 {
@@ -136,7 +113,7 @@ fn getSectionAddress(elf: [*]const u8, section_name: []const u8) !u64 {
     return error.SectionNotFound;
 }
 
-fn getSectionSlice(elf: [*]const u8, section_name: []const u8) ![]const u8 {
+fn getSectionSlice(elf: [*]const u8, section_name: []const u8) !std.dwarf.DwarfInfo.Section {
     const sh_strndx = std.mem.readInt(u16, elf[62 .. 62 + 2], .little);
     const sh_num = std.mem.readInt(u16, elf[60 .. 60 + 2], .little);
 
@@ -148,8 +125,10 @@ fn getSectionSlice(elf: [*]const u8, section_name: []const u8) ![]const u8 {
     while (i < sh_num) : (i += 1) {
         const header = getShdr(elf, i);
 
-        if (std.mem.eql(u8, getSectionName(section_names, header) orelse continue, section_name))
-            return getSectionData(elf, header);
+        if (std.mem.eql(u8, getSectionName(section_names, header) orelse continue, section_name)) {
+            const data = getSectionData(elf, header);
+            return .{ .data = data, .owned = false };
+        }
     }
 
     return error.SectionNotFound;

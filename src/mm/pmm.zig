@@ -1,26 +1,23 @@
 const std = @import("std");
 const limine = @import("limine");
-const arch = @import("../../aarch64.zig");
-const vmm = @import("vmm.zig");
+const arch = @import("../arch.zig");
 const slab = @import("slab.zig");
 const log = std.log.scoped(.pmm);
 
 const Bitmap = struct {
-    const Self = @This();
-
     bits: [*]u8,
     size: usize,
 
-    pub fn set(self: Self, bit: u64) void {
-        self.bits[bit / 8] |= @as(u8, 1) << @as(u3, bit % 8);
+    pub fn set(self: Bitmap, bit: u64) void {
+        self.bits[bit / 8] |= @as(u8, 1) << @as(u3, @truncate(bit % 8));
     }
 
-    pub fn unset(self: Self, bit: u64) void {
-        self.bits[bit / 8] &= ~(@as(u8, 1) << @as(u3, bit % 8));
+    pub fn unset(self: Bitmap, bit: u64) void {
+        self.bits[bit / 8] &= ~(@as(u8, 1) << @as(u3, @truncate(bit % 8)));
     }
 
-    pub fn check(self: Self, bit: u64) bool {
-        return (self.bits[bit / 8] & (@as(u8, 1) << @as(u3, bit % 8))) != 0;
+    pub fn check(self: Bitmap, bit: u64) bool {
+        return (self.bits[bit / 8] & (@as(u8, 1) << @as(u3, @truncate(bit % 8)))) != 0;
     }
 };
 
@@ -62,7 +59,7 @@ pub fn init() void {
     // Calculate the needed size for the bitmap in bytes and align it to page size.
     page_count = highest_memory / std.mem.page_size;
     used_pages = page_count;
-    bitmap.size = std.mem.alignForward(page_count / 8, std.mem.page_size);
+    bitmap.size = std.mem.alignForward(usize, page_count / 8, std.mem.page_size);
 
     log.debug("Used pages: {}", .{used_pages});
     log.debug("Bitmap size: {} KB", .{bitmap.size / 1024});

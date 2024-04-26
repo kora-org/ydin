@@ -2,11 +2,10 @@ const std = @import("std");
 
 pub const cpu = @import("x86_64/cpu.zig");
 pub const main = @import("x86_64/main.zig");
-pub const panic = @import("x86_64/panic.zig");
-pub const mm = @import("x86_64/mm.zig");
-pub const framebuffer = @import("x86_64/framebuffer.zig");
 pub const acpi = @import("x86_64/acpi.zig");
 pub const smp = @import("x86_64/smp.zig");
+pub const sched = @import("x86_64/sched.zig");
+pub const vmm = @import("x86_64/vmm.zig");
 
 pub fn interruptsEnabled() bool {
     const eflags = asm volatile (
@@ -37,22 +36,22 @@ pub fn halt() void {
     }
 }
 
-pub const Spinlock = struct {
+pub const Spinlock = extern struct {
     lock_bits: std.atomic.Value(u32) = .{ .raw = 0 },
     refcount: std.atomic.Value(usize) = .{ .raw = 0 },
     interrupts: bool = false,
 
     pub fn lock(self: *Spinlock) void {
-        _ = self.refcount.fetchAdd(1, .Monotonic);
+        _ = self.refcount.fetchAdd(1, .monotonic);
 
         const current = interruptsEnabled();
         disableInterrupts();
 
         while (true) {
-            if (self.lock_bits.swap(1, .Acquire) == 0)
+            if (self.lock_bits.swap(1, .acquire) == 0)
                 break;
 
-            while (self.lock_bits.fetchAdd(0, .Monotonic) != 0) {
+            while (self.lock_bits.fetchAdd(0, .monotonic) != 0) {
                 if (interruptsEnabled())
                     enableInterrupts()
                 else
@@ -63,14 +62,14 @@ pub const Spinlock = struct {
             }
         }
 
-        _ = self.refcount.fetchSub(1, .Monotonic);
-        @fence(.Acquire);
+        _ = self.refcount.fetchSub(1, .monotonic);
+        @fence(.acquire);
         self.interrupts = current;
     }
 
     pub fn unlock(self: *Spinlock) void {
-        self.lock_bits.store(0, .Release);
-        @fence(.Release);
+        self.lock_bits.store(0, .release);
+        @fence(.release);
 
         if (self.interrupts)
             enableInterrupts()

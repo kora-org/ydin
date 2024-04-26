@@ -1,7 +1,7 @@
 const std = @import("std");
 const limine = @import("limine");
-const pmm = @import("pmm.zig");
-const slab = @import("slab.zig");
+const pmm = @import("../../mm/pmm.zig");
+const slab = @import("../../mm/slab.zig");
 const log = std.log.scoped(.vmm);
 
 pub export var kernel_address_request: limine.KernelAddress.Request = .{};
@@ -13,7 +13,7 @@ pub const CacheMode = enum(u4) {
     WriteBack,
 };
 
-pub const PageFlags = struct {
+pub const PageFlags = packed struct {
     read: bool = false,
     write: bool = false,
     exec: bool = false,
@@ -24,7 +24,7 @@ pub const PageFlags = struct {
 pub var pagemap = Pagemap{};
 
 pub fn init() void {
-    pagemap.root = @intFromPtr(pmm.alloc(1));
+    pagemap.root.ttbr1 = @intFromPtr(pmm.alloc(1));
 
     var page_flags = PageFlags{
         .read = true,
@@ -47,14 +47,14 @@ pub fn init() void {
     }
 
     for (pmm.memmap_response.getEntries()) |ent| {
-        if (ent.base + ent.length < 0x800 * 0x200000) {
+        if (ent.base + ent.length < @as(usize, @intCast((0x800 * 0x200000)))) {
             continue;
         }
 
-        const base: usize = std.mem.alignBackward(u64, ent.base, 0x200000);
+        const base: usize = std.mem.alignBackward(ent.base, 0x200000);
         var i: usize = 0;
 
-        while (i < std.mem.alignForward(u64, ent.length, 0x200000)) : (i += 0x200000)
+        while (i < std.mem.alignForward(ent.length, 0x200000)) : (i += 0x200000)
             pagemap.mapPage(page_flags, (base + i) + pmm.hhdm_response.offset, base + i, true);
     }
 
@@ -64,26 +64,36 @@ pub fn init() void {
 pub const Pagemap = struct {
     const Self = @This();
 
-    root: u64 = undefined,
+    root: struct {
+        ttbr0: u64,
+        ttbr1: u64,
+    } = undefined,
 
     pub fn load(self: *Self) void {
-        asm volatile ("mov %[root], %%cr3"
+        asm volatile ("msr ttbr0_el1, %[val]"
             :
-            : [root] "r" (self.root),
-            : "memory"
+            : [val] "r" (self.root.ttbr0),
+        );
+        asm volatile ("msr ttbr1_el1, %[val]"
+            :
+            : [val] "r" (self.root.ttbr1),
         );
     }
 
     pub fn save(self: *Self) void {
-        self.root = asm volatile ("mov %%cr3, %[old_cr3]"
-            : [old_cr3] "=r" (-> u64),
-            :
-            : "memory"
-        );
+        self.root = .{
+            .ttbr0 = asm volatile ("mrs %[ret], ttbr0_el1"
+                : [ret] "=r" (-> u64),
+            ),
+            .ttbr1 = asm volatile ("mrs %[ret], ttbr1_el1"
+                : [ret] "=r" (-> u64),
+            ),
+        };
     }
 
     pub fn mapPage(self: *Self, flags: PageFlags, virt: u64, phys: u64, huge: bool) void {
-        var root: ?[*]u64 = @as([*]u64, @ptrFromInt(self.root + pmm.hhdm_response.offset));
+        const ttbr = if ((virt & (1 << 63)) == 1) self.root.ttbr1 else self.root.ttbr0;
+        var root: ?[*]u64 = @as([*]u64, @ptrFromInt(ttbr + pmm.hhdm_response.offset));
 
         const indices: [4]u64 = [_]u64{
             genIndex(virt, 39), genIndex(virt, 30),
@@ -105,7 +115,8 @@ pub const Pagemap = struct {
     }
 
     pub fn unmapPage(self: *Self, virt: u64) void {
-        var root: ?[*]u64 = @as([*]u64, @ptrFromInt(self.root + pmm.hhdm_response.offset));
+        const ttbr = if ((virt & (1 << 63)) == 1) self.root.ttbr1 else self.root.ttbr0;
+        var root: ?[*]u64 = @as([*]u64, @ptrFromInt(ttbr + pmm.hhdm_response.offset));
 
         const indices: [4]u64 = [_]u64{
             genIndex(virt, 39), genIndex(virt, 30),
@@ -132,7 +143,7 @@ inline fn genIndex(virt: u64, comptime shift: usize) u64 {
 }
 
 fn getNextLevel(level: [*]u64, index: usize, create: bool) ?[*]u64 {
-    if ((level[index] & 1) == 0) {
+    if ((level[index] & 3) == 0) {
         if (!create) return null;
 
         if (pmm.alloc(1)) |table_ptr| {
@@ -145,24 +156,16 @@ fn getNextLevel(level: [*]u64, index: usize, create: bool) ?[*]u64 {
 }
 
 fn createPte(flags: PageFlags, phys_ptr: u64, huge: bool) u64 {
-    var result: u64 = 1;
-    const pat_bit: u64 = if (huge) (1 << 12) else (1 << 7);
+    var result: u64 = 1 | (3 << 8) | (1 << 10);
 
-    if (flags.write) result |= (1 << 1);
-    if (!flags.exec) result |= (1 << 63);
-    if (flags.user) result |= (1 << 2);
-    if (huge) result |= (1 << 7);
+    if (!flags.write) result |= (1 << 7);
+    if (!flags.exec) result |= (1 << 54);
+    if (flags.user) result |= (1 << 6);
+    if (!huge) result |= (1 << 1);
 
     switch (flags.cache_type) {
-        .Uncached => {
-            result |= (1 << 4) | (1 << 3);
-            result &= ~pat_bit;
-        },
-        .WriteCombining => result |= pat_bit | (1 << 4) | (1 << 3),
-        .WriteProtect => {
-            result |= pat_bit | (1 << 4);
-            result &= ~@as(u64, 1 << 3);
-        },
+        .Uncached => result |= (1 << 2),
+        .WriteCombining => result |= (2 << 2),
         else => {},
     }
 
@@ -171,9 +174,10 @@ fn createPte(flags: PageFlags, phys_ptr: u64, huge: bool) u64 {
 }
 
 pub inline fn invalidatePage(addr: u64) void {
-    asm volatile ("invlpg (%[virt])"
+    asm volatile (
+        \\tlbi vale1, %[virt]
         :
-        : [virt] "r" (addr),
+        : [virt] "r" (addr << 12),
         : "memory"
     );
 }

@@ -3,12 +3,16 @@
     .version = "0.1.0",
     .dependencies = .{
         .limine = .{
-            .url = "git+https://github.com/kora-org/limine#7c574dd9bfa6e15f751030df4562790f177837de",
-            .hash = "1220007be08397588b0285e0d5a5791be4280b8de00e7b5caf825dad61079877963a",
+            .url = "git+https://github.com/kora-org/limine#230d75b592d58f015ae321f7a2c4280d660984dd",
+            .hash = "12205f5363fa339b40409504ded9173347390cb0bb2f6e7c259e7fbcd0584ef724df",
         },
         .limine_bootloader = .{
             .url = "git+https://github.com/limine-bootloader/limine#v7.0.2-binary",
             .hash = "1220483dcf661f0ced85d9228c54a88a010781a97d10fa4c25fb2bcb594b3afafa7d",
+        },
+        .uacpi = .{
+            .url = "git+https://github.com/UltraOS/uACPI#52ebd26a88e21a9c5eab3a9d155762d624ac475d",
+            .hash = "12202839f8f92523b2287198f24928e107f2cf75db38a410be415326cca949409142",
         },
     },
     .paths = .{""},

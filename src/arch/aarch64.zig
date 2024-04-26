@@ -1,7 +1,6 @@
 const std = @import("std");
 const dtb = @import("dtb");
 
-pub const mm = @import("aarch64/mm.zig");
 pub const acpi = @import("aarch64/acpi.zig");
 
 pub fn halt() void {

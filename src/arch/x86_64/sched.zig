@@ -4,9 +4,9 @@ const arch = @import("../x86_64.zig");
 const lapic = @import("apic/lapic.zig");
 //const proc = @import("proc.zig");
 const smp = @import("smp.zig");
-const pmm = @import("mm/pmm.zig");
-const vmm = @import("mm/vmm.zig");
-const slab = @import("mm/slab.zig");
+const pmm = @import("../../mm/pmm.zig");
+const vmm = @import("vmm.zig");
+const slab = @import("../../mm/slab.zig");
 
 pub const Thread = struct {
     id: usize = 0,
@@ -31,7 +31,7 @@ pub fn Queue(comptime T: type, comptime member_name: []const u8) type {
         }
 
         fn nodeToRef(node: *Node) *T {
-            return @fieldParentPtr(T, member_name, node);
+            return @fieldParentPtr(member_name, node);
         }
 
         pub fn enqueue(self: *@This(), node: *T) void {

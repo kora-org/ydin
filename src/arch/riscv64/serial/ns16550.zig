@@ -1,5 +1,5 @@
 const std = @import("std");
-const mmio = @import("../mmio.zig");
+const mmio = @import("../../../mmio.zig");
 
 // Same as x86's serial implementation except using MMIO instead of
 // x86's PMIO.

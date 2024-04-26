@@ -1,7 +1,7 @@
 const std = @import("std");
 const limine = @import("limine");
-const mmio = @import("mmio.zig");
-const pmm = @import("mm/pmm.zig");
+const mmio = @import("../../mmio.zig");
+const pmm = @import("../../mm/pmm.zig");
 const log = std.log.scoped(.acpi);
 
 pub const GenericAddress = extern struct {
@@ -113,8 +113,8 @@ inline fn getEntries(comptime T: type, header: *Header) []align(1) const T {
     return std.mem.bytesAsSlice(T, header.getContents());
 }
 
-fn printTable(sdt: *Header) void {
-    //if (std.mem.eql(u8, "SSDT", &sdt.signature)) return;
+inline fn printTable(sdt: *Header) void {
+    if (std.mem.eql(u8, "SSDT", &sdt.signature)) return;
     log.debug(
         "  signature={s}, base=0x{x:0>16}, length={}, revision={}",
         .{ sdt.signature, @intFromPtr(sdt), sdt.length, sdt.revision },

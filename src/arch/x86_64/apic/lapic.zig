@@ -1,7 +1,7 @@
 const std = @import("std");
 const acpi = @import("../acpi.zig");
-const pmm = @import("../mm/pmm.zig");
-const vmm = @import("../mm/vmm.zig");
+const pmm = @import("../../../mm/pmm.zig");
+const vmm = @import("../vmm.zig");
 const smp = @import("../smp.zig");
 const arch = @import("../../x86_64.zig");
 const log = std.log.scoped(.lapic);
@@ -29,19 +29,19 @@ const REG_TIMER_DIV = 0x3e0;
 pub fn init() void {
     const _mmio_base = (arch.rdmsr(0x1b) & 0xfffff000) + pmm.hhdm_response.offset;
     if (_mmio_base != mmio_base) {
-        log.warn("MMIO base 0x{X:0>16} is not the x86 default!", .{mmio_base});
+        log.warn("MMIO base 0x{x:0>16} is not the x86 default!", .{_mmio_base});
         mmio_base = _mmio_base;
     }
 
     // map the APIC as UC
-    const aligned_base: u64 = std.mem.alignBackward(u64, mmio_base, 0x200000);
-    const page_flags = vmm.PageFlags{
-        .read = true,
-        .write = true,
-        .cache_type = .Uncached,
-    };
-    vmm.pagemap.unmapPage(aligned_base);
-    vmm.pagemap.mapPage(page_flags, aligned_base, aligned_base + pmm.hhdm_response.offset, true);
+    //const aligned_base: u64 = std.mem.alignBackward(u64, mmio_base, 0x200000);
+    //const page_flags = vmm.PageFlags{
+    //    .read = true,
+    //    .write = true,
+    //    .cache_type = .Uncached,
+    //};
+    //vmm.pagemap.unmapPage(aligned_base);
+    //vmm.pagemap.mapPage(page_flags, aligned_base, aligned_base + pmm.hhdm_response.offset, true);
 
     // enable the APIC
     enable();

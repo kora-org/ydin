@@ -98,7 +98,7 @@ pub const Psf2 = struct {
     }
 
     pub fn getChar(self: *const Psf2, char: u21) ![]const u8 {
-        var buf = [1]u8{0} ** std.math.maxInt(u21);
+        var buf = [1]u8{0} ** 4;
         const len: usize = try std.unicode.utf8Encode(char, buf[0..]);
         return self.getUnicode(buf[0..len]);
     }

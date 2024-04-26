@@ -1,5 +1,5 @@
 const std = @import("std");
-const mmio = @import("../mmio.zig");
+const mmio = @import("../../../mmio.zig");
 
 address: u64,
 

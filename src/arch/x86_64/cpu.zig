@@ -7,8 +7,7 @@ const interrupt = @import("interrupt.zig");
 const log = std.log.scoped(.cpu);
 
 pub export fn handleSyscall(frame: *interrupt.Frame) callconv(.C) void {
-    log.err("unsupported syscall #{}!", .{frame.rax});
-    while (true) {}
+    log.err("Unsupported syscall #{}!", .{frame.rax});
 }
 
 pub fn init() void {

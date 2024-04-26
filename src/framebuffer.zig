@@ -1,5 +1,4 @@
 const limine = @import("limine");
-const arch = @import("../x86_64.zig");
 const log = @import("std").log.scoped(.framebuffer);
 
 pub export var framebuffer_request: limine.Framebuffer.Request = .{};

@@ -2,6 +2,8 @@ const std = @import("std");
 const builtin = @import("builtin");
 const arch = @import("arch.zig");
 
+var lock = arch.Spinlock{};
+
 const DefaultWriter = switch (builtin.cpu.arch) {
     .x86_64 => @import("arch/x86_64/serial.zig"),
     .aarch64 => @import("arch/aarch64/serial.zig").Serial,
@@ -9,21 +11,27 @@ const DefaultWriter = switch (builtin.cpu.arch) {
 };
 
 pub fn init() void {
-    const serial = switch (builtin.cpu.arch) {
+    lock.lock();
+    defer lock.unlock();
+
+    const default_writer = switch (builtin.cpu.arch) {
         .x86_64 => DefaultWriter{},
         .aarch64 => DefaultWriter() catch unreachable,
         else => unreachable,
     };
-    serial.init();
+    default_writer.init();
 }
 
 pub fn write(_: *anyopaque, bytes: []const u8) anyerror!usize {
-    const serial = switch (builtin.cpu.arch) {
+    lock.lock();
+    defer lock.unlock();
+
+    const default_writer = switch (builtin.cpu.arch) {
         .x86_64 => DefaultWriter{},
         .aarch64 => try DefaultWriter(),
         else => unreachable,
     };
-    return serial.write(bytes);
+    return default_writer.write(bytes);
 }
 
 pub const writer = std.io.Writer(

@@ -1,7 +1,7 @@
 const std = @import("std");
 const dtb = @import("dtb");
 const arch = @import("../riscv64.zig");
-const utils = @import("utils.zig");
+const utils = @import("../../utils.zig");
 const Pl011 = @import("serial/pl011.zig");
 const Ns16550 = @import("serial/ns16550.zig");
 

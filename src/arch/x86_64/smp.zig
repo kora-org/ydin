@@ -1,9 +1,9 @@
 const std = @import("std");
 const arch = @import("../x86_64.zig");
 const limine = @import("limine");
-const pmm = @import("mm/pmm.zig");
-const vmm = @import("mm/vmm.zig");
-const slab = @import("mm/slab.zig");
+const pmm = @import("../../mm/pmm.zig");
+const vmm = @import("vmm.zig");
+const slab = @import("../../mm/slab.zig");
 const gdt = @import("gdt.zig");
 const interrupt = @import("interrupt.zig");
 const sched = @import("sched.zig");
@@ -24,7 +24,7 @@ pub const CoreInfo = struct {
     current_thread: ?*sched.Thread = null,
 };
 
-var booted_cores: std.atomic.Value(u16) = .{ .raw = 1 };
+var booted_cores = std.atomic.Value(u16).init(1);
 
 pub fn isBsp() bool {
     if (arch.rdmsr(0xc0000101) == 0)
@@ -43,12 +43,10 @@ pub inline fn setCoreInfo(core_info: *CoreInfo) void {
 
 fn createCoreInfo(cpu_info: *limine.Smp.Cpu) void {
     const core_info = slab.allocator.create(CoreInfo) catch unreachable;
-
-    core_info.* = std.mem.zeroInit(CoreInfo, .{
-        .lapic_id = cpu_info.lapic_id,
+    core_info.* = .{
         .processor_id = cpu_info.processor_id,
-    });
-
+        .lapic_id = cpu_info.lapic_id,
+    };
     setCoreInfo(core_info);
 }
 
@@ -67,10 +65,10 @@ pub export fn smpEntry(cpu_info: *limine.Smp.Cpu) callconv(.C) noreturn {
     getCoreInfo().tss.flush();
 
     // let BSP know we're done, then off we go!
-    _ = booted_cores.fetchAdd(1, .Monotonic);
+    _ = booted_cores.fetchAdd(1, .monotonic);
     sched.init() catch unreachable;
 
-    log.debug("CPU {} online!", .{cpu_info.processor_id});
+    log.debug("CPU {} online!", .{cpu_info.processor_id + 1});
     while (true) {}
 }
 
@@ -79,12 +77,9 @@ pub fn init() void {
         log.debug("Detected {} CPUs.", .{smp.cpu_count});
 
         for (smp.getCpus()) |cpu_info| {
-            log.debug("is cpu", .{});
             if (cpu_info.lapic_id == smp.bsp_lapic_id) {
-                log.debug("lapic id matchy", .{});
                 createCoreInfo(cpu_info);
                 getCoreInfo().is_bsp = true;
-                log.debug("creaty", .{});
 
                 // load the TSS
                 getCoreInfo().tss.rsp0 = sched.createKernelStack().?;
@@ -92,12 +87,13 @@ pub fn init() void {
                 getCoreInfo().tss.flush();
 
                 lapic.init();
+                log.debug("CPU {} online!", .{cpu_info.processor_id + 1});
                 continue;
             }
 
             cpu_info.goto = &smpEntry;
         }
 
-        while (booted_cores.load(.Monotonic) != smp.cpu_count) {}
+        while (booted_cores.load(.monotonic) != smp.cpu_count) {}
     }
 }

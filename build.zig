@@ -14,8 +14,9 @@ pub fn build(b: *std.Build) !void {
     const target = try genTarget(arch);
     const limine = b.dependency("limine", .{});
     const limine_bootloader = b.dependency("limine_bootloader", .{});
+    const uacpi = b.dependency("uacpi", .{});
 
-    const ydin = try buildYdin(b, target, limine);
+    const ydin = try buildYdin(b, target, limine, uacpi);
     const iso = try buildLimineIso(b, ydin, limine_bootloader);
     const qemu = try runIsoQemu(b, iso, arch);
     _ = qemu;
@@ -45,7 +46,7 @@ fn genTarget(arch: Arch) !CrossTarget {
     return target;
 }
 
-fn buildYdin(b: *std.Build, target: CrossTarget, limine: *std.Build.Dependency) !*std.Build.Step.Compile {
+fn buildYdin(b: *std.Build, target: CrossTarget, limine: *std.Build.Dependency, uacpi: *std.Build.Dependency) !*std.Build.Step.Compile {
     const optimize = b.standardOptimizeOption(.{});
     const exe_options = b.addOptions();
 
@@ -102,15 +103,40 @@ fn buildYdin(b: *std.Build, target: CrossTarget, limine: *std.Build.Dependency) 
         },
     });
     ydin.root_module.addOptions("build_options", exe_options);
-    ydin.setLinkerScriptPath(.{
-        .path = switch (target.cpu_arch.?) {
-            .x86_64 => "src/arch/x86_64/linker.ld",
-            .aarch64 => "src/arch/aarch64/linker.ld",
-            .riscv64 => "src/arch/riscv64/linker.ld",
-            else => return error.UnsupportedArchitecture,
+    ydin.setLinkerScriptPath(.{ .path = "src/linker.ld" });
+    ydin.root_module.addImport("limine", limine.module("limine"));
+    ydin.addIncludePath(.{ .path = "src/uacpi" });
+    ydin.addIncludePath(uacpi.path("include"));
+    const root_dir = b.pathFromRoot(".");
+    ydin.addCSourceFiles(.{
+        .files = &[_][]const u8{
+            "src/uacpi/printf.c",
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/tables.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/types.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/uacpi.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/utilities.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/interpreter.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/opcodes.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/namespace.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/stdlib.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/shareable.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/opregion.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/default_handlers.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/io.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/notify.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/sleep.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/registers.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/resources.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/event.c").getPath(b)),
+        },
+        .flags = &[_][]const u8{
+            "-ffreestanding",
+            "-nostdlib",
+            "-mno-red-zone",
+            "-DUACPI_OVERRIDE_STDLIB",
+            "-DUACPI_SIZED_FREES",
         },
     });
-    ydin.root_module.addImport("limine", limine.module("limine"));
 
     b.installArtifact(ydin);
     return ydin;
@@ -133,9 +159,10 @@ fn buildLimineIso(b: *std.Build, ydin: *std.Build.Step.Compile, limine: *std.Bui
         // zig fmt: off
         "/bin/sh", "-c",
         try std.mem.concat(b.allocator, u8, &[_][]const u8{
+            "rm -rf zig-out/iso/root && ",
             "mkdir -p zig-out/iso/root/EFI/BOOT && ",
             "cp zig-out/bin/vmydin zig-out/iso/root && ",
-            "cp src/arch/x86_64/boot/limine.cfg zig-out/iso/root && ",
+            "cp src/boot/limine.cfg zig-out/iso/root && ",
             "cp ", limine_path.getPath(b), "/limine-bios.sys ",
                    limine_path.getPath(b), "/limine-bios-cd.bin ",
                    limine_path.getPath(b), "/limine-uefi-cd.bin ",
@@ -199,28 +226,33 @@ fn runIsoQemu(b: *std.Build, iso: *std.Build.Step.Run, arch: Arch) !*std.Build.S
             // zig fmt: off
             qemu_executable,
             //"-s", "-S",
-            "-cpu", "max",
-            "-smp", "2",
+            "-cpu", "host",
+            "-smp", "4",
             "-M", "q35,accel=kvm:whpx:hvf:tcg",
             "-m", "2G",
             "-cdrom", "zig-out/iso/kora.iso",
             "-bios", try edk2FileName(b, arch),
             "-boot", "d",
             "-serial", "stdio",
+            "-display", "none",
+            "-no-reboot",
             // zig fmt: on
         },
-        .aarch64 => &[_][]const u8{
+        .aarch64, .riscv64 => &[_][]const u8{
             // zig fmt: off
             qemu_executable,
             //"-s", "-S",
             "-cpu", "max",
-            "-smp", "2",
+            "-smp", "4",
             "-M", "virt,accel=kvm:whpx:hvf:tcg",
             "-m", "2G",
             "-cdrom", "zig-out/iso/kora.iso",
             "-bios", try edk2FileName(b, arch),
             "-boot", "d",
             "-serial", "stdio",
+            "-display", "none",
+            "-no-reboot",
+            "-no-shutdown",
             // zig fmt: on
         },
         else => return error.UnsupportedArchitecture,
@@ -233,37 +265,4 @@ fn runIsoQemu(b: *std.Build, iso: *std.Build.Step.Run, arch: Arch) !*std.Build.S
     qemu_iso_step.dependOn(&qemu_iso_cmd.step);
 
     return qemu_iso_cmd;
-}
-
-fn runYdinQemu(b: *std.Build, ydin: *std.Build.Step.Compile, arch: Arch) !*std.Build.Step.Run {
-    const qemu_executable = switch (arch) {
-        .x86_64 => "qemu-system-x86_64",
-        .aarch64 => "qemu-system-aarch64",
-        .riscv64 => "qemu-system-riscv64",
-        else => return error.UnsupportedArchitecture,
-    };
-
-    const qemu_ydin_args = switch (arch) {
-        .aarch64, .riscv64 => &[_][]const u8{
-            // zig fmt: off
-            qemu_executable,
-            //"-s", "-S",
-            "-cpu", "max",
-            "-smp", "2",
-            "-M", "virt,accel=kvm:whpx:hvf:tcg",
-            "-m", "2G",
-            "-kernel", "zig-out/bin/vmydin",
-            "-serial", "stdio",
-            // zig fmt: on
-        },
-        else => return error.UnsupportedArchitecture,
-    };
-
-    const qemu_ydin_cmd = b.addSystemCommand(qemu_ydin_args);
-    qemu_ydin_cmd.step.dependOn(&ydin.install_step.?.step);
-
-    const qemu_ydin_step = b.step("run", "Boot Ydin in QEMU");
-    qemu_ydin_step.dependOn(&qemu_ydin_cmd.step);
-
-    return qemu_ydin_cmd;
 }
