@@ -38,16 +38,10 @@ pub fn main() !void {
     arch.vmm.init();
     arch.acpi.init();
     try arch.smp.init();
-    //if (arch.acpi.rsdp_request.response) |rsdp|
-    //    arch.acpi.rsdp_response = rsdp.*;
-    //
     //var params = uacpi.uacpi.uacpi_init_params{
     //    .rsdp = arch.acpi.rsdp_response.address,
-    //    .rt_params = .{
-    //        .log_level = uacpi.uacpi.UACPI_LOG_INFO,
-    //        .flags = 0,
-    //    },
-    //    .no_acpi_mode = true,
+    //    .log_level = uacpi.uacpi.UACPI_LOG_INFO,
+    //    .flags = uacpi.uacpi.UACPI_FLAG_NO_ACPI_MODE,
     //};
     //_ = uacpi.uacpi.uacpi_initialize(&params);
 

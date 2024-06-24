@@ -7,12 +7,12 @@
             .hash = "1220694dd409ebd652d1dc9913ad4e4855239850b07f1c3c4d33f505ab1117b3fae1",
         },
         .limine_bootloader = .{
-            .url = "git+https://github.com/limine-bootloader/limine#v7.0.2-binary",
-            .hash = "1220483dcf661f0ced85d9228c54a88a010781a97d10fa4c25fb2bcb594b3afafa7d",
+            .url = "git+https://github.com/limine-bootloader/limine#v7.8.0-binary",
+            .hash = "1220bfc95f2cb6e32fcfe8dae5a3faab66490796c5e0fd1d767321f5ceb13f6dbcdc",
         },
         .uacpi = .{
-            .url = "git+https://github.com/UltraOS/uACPI#52ebd26a88e21a9c5eab3a9d155762d624ac475d",
-            .hash = "12202839f8f92523b2287198f24928e107f2cf75db38a410be415326cca949409142",
+            .url = "git+https://github.com/UltraOS/uACPI#63051383b51297764a3730a76842a5c0b9a94331",
+            .hash = "12200c871275c178efb86ab43dfaf2caf87a91426b656522bcd32bea9ec308bda513",
         },
     },
     .paths = .{""},

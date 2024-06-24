@@ -107,7 +107,6 @@ fn buildYdin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.buil
     const root_dir = b.pathFromRoot(".");
     ydin.addCSourceFiles(.{
         .files = &[_][]const u8{
-            "src/uacpi/printf.c",
             try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/tables.c").getPath(b)),
             try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/types.c").getPath(b)),
             try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/uacpi.c").getPath(b)),
@@ -125,13 +124,16 @@ fn buildYdin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.buil
             try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/registers.c").getPath(b)),
             try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/resources.c").getPath(b)),
             try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/event.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/mutex.c").getPath(b)),
+            try std.fs.path.relative(b.allocator, root_dir, uacpi.path("source/osi.c").getPath(b)),
         },
         .flags = &[_][]const u8{
             "-ffreestanding",
             "-nostdlib",
             "-mno-red-zone",
-            "-DUACPI_OVERRIDE_STDLIB",
+            "-DUACPI_OVERRIDE_LIBC",
             "-DUACPI_SIZED_FREES",
+            "-DUACPI_FORMATTED_LOGGING",
         },
     });
 

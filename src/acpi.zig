@@ -13,7 +13,7 @@ const arch = @import("arch.zig");
 const log = std.log.scoped(.uacpi);
 
 comptime {
-    _ = @import("uacpi/uacpi_stdlib.zig");
+    _ = @import("uacpi/uacpi_libc.zig");
 }
 
 pub export fn uacpi_kernel_raw_memory_read(address: uacpi.uacpi_phys_addr, byte_width: u8, ret: *u64) callconv(.C) uacpi.uacpi_status {
@@ -148,24 +148,15 @@ pub export fn uacpi_kernel_free(address: [*]u8, size: usize) callconv(.C) void {
     slab.allocator.free(address[0..size]);
 }
 
-pub export fn uacpi_kernel_log(level: uacpi.uacpi_log_level, string: [*c]const u8, ...) callconv(.C) void {
-    var format = @cVaStart();
-    uacpi_kernel_vlog(level, string, &format);
-    @cVaEnd(&format);
-}
-
-pub export fn uacpi_kernel_vlog(level: uacpi.uacpi_log_level, string: [*c]const u8, format: *std.builtin.VaList) callconv(.C) void {
-    var buf = [1]u8{0} ** 1024;
-    _ = printf.vsnprintf(@as([*c]u8, @ptrCast(@alignCast(&buf))), 1024, string, @ptrCast(format));
+pub export fn uacpi_kernel_log(level: uacpi.uacpi_log_level, string: [*c]const u8) callconv(.C) void {
     switch (level) {
-        uacpi.UACPI_LOG_TRACE => log.debug("{s}", .{buf}),
-        uacpi.UACPI_LOG_INFO => log.info("{s}", .{buf}),
-        uacpi.UACPI_LOG_WARN => log.warn("{s}", .{buf}),
-        uacpi.UACPI_LOG_ERROR => log.err("{s}", .{buf}),
+        uacpi.UACPI_LOG_TRACE => log.debug("{s}", .{string}),
+        uacpi.UACPI_LOG_INFO => log.info("{s}", .{string}),
+        uacpi.UACPI_LOG_WARN => log.warn("{s}", .{string}),
+        uacpi.UACPI_LOG_ERROR => log.err("{s}", .{string}),
         else => @panic("Unknown log level"),
     }
 }
-
 pub export fn uacpi_kernel_get_ticks() callconv(.C) u64 {
     return 0;
 }
@@ -185,6 +176,10 @@ pub export fn uacpi_kernel_create_mutex() callconv(.C) *arch.Spinlock {
 }
 
 pub export fn uacpi_kernel_free_mutex(_: *arch.Spinlock) callconv(.C) void {}
+
+pub export fn uacpi_kernel_get_thread_id() callconv(.C) uacpi.uacpi_thread_id {
+    return null;
+}
 
 pub export fn uacpi_kernel_acquire_mutex(_: *arch.Spinlock, _: u16) callconv(.C) bool {
     return true;
