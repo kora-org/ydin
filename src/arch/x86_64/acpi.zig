@@ -3,6 +3,7 @@ const limine = @import("limine");
 const io = @import("io.zig");
 const mmio = @import("../../mmio.zig");
 const pmm = @import("../../mm/pmm.zig");
+const apic = @import("apic.zig");
 const log = std.log.scoped(.acpi);
 
 pub const GenericAddress = extern struct {
@@ -102,6 +103,62 @@ pub const Fadt = extern struct {
     x_gpe1_blk: GenericAddress,
 };
 
+pub const Madt = extern struct {
+    header: Madt.Header,
+    lapic_addr: u32,
+    flags: u32,
+    entries: [*]u8,
+
+    pub fn get_iso(self: *align(1) Madt, irq: u8) ?*align(1) Iso {
+        var entry: *Madt.Header = undefined;
+        var i: usize = 0;
+        while (i < self.header.length - @sizeOf(Madt)) {
+            entry = @ptrFromInt(@intFromPtr(&self.entries) + i);
+            if (entry.type == 2) {
+                const iso: *align(1) Iso = @ptrCast(entry);
+                if (iso.irq_src == irq) return iso;
+            }
+            i += @max(@sizeOf(Madt.Header), entry.length);
+        }
+        return null;
+    }
+
+    pub fn get_ioapic(self: *align(1) Madt) !*align(1) IoApic {
+        var entry: *Madt.Header = undefined;
+        var i: usize = 0;
+        while (i < self.header.length - @sizeOf(Madt)) {
+            entry = @ptrFromInt(@intFromPtr(&self.entries) + i);
+            if (entry.type == 1) return @ptrCast(entry);
+            i += @max(@sizeOf(Madt.Header), entry.length);
+        }
+        return error.NotFound;
+    }
+
+    pub const Header = packed struct {
+        type: u8,
+        length: u8,
+    };
+
+    pub const Iso = packed struct {
+        header: Madt.Header,
+        bus_src: u8,
+        irq_src: u8,
+        gsi: u32,
+        flags: u16,
+    };
+
+    pub const IoApic = extern struct {
+        header: Madt.Header,
+        ioapic: apic.ioapic.IoApic,
+    };
+
+    pub const LocalApic = packed struct {
+        processor_id: u8,
+        apic_id: u8,
+        flags: u32,
+    };
+};
+
 pub export var rsdp_request: limine.Rsdp.Request = .{};
 pub var rsdp_response: limine.Rsdp.Response = undefined;
 
@@ -109,6 +166,7 @@ var timer_block: GenericAddress = undefined;
 var timer_bits: usize = 0;
 var xsdt: ?*Header = null;
 var rsdt: ?*Header = null;
+pub var madt: ?*align(1) Madt = null;
 
 inline fn getEntries(comptime T: type, header: *Header) []align(1) const T {
     return std.mem.bytesAsSlice(T, header.getContents());
@@ -192,6 +250,9 @@ pub fn init() void {
             printTable(entry);
         }
     }
+
+    if (getTable("APIC")) |madt_sdt|
+        madt = @as(*align(1) Madt, @constCast(@ptrCast(madt_sdt.getContents())));
 
     if (getTable("FACP")) |fadt_sdt| {
         const fadt = @as(*align(1) const Fadt, @ptrCast(fadt_sdt.getContents()));

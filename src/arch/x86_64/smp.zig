@@ -7,7 +7,8 @@ const slab = @import("../../mm/slab.zig");
 const gdt = @import("gdt.zig");
 const interrupt = @import("interrupt.zig");
 const sched = @import("sched.zig");
-const lapic = @import("apic/lapic.zig");
+const acpi = @import("acpi.zig");
+const apic = @import("apic.zig");
 const cpu = @import("cpu.zig");
 const log = std.log.scoped(.smp);
 
@@ -51,28 +52,24 @@ fn createCoreInfo(cpu_info: *limine.Smp.Cpu) void {
 }
 
 pub export fn smpEntry(cpu_info: *limine.Smp.Cpu) callconv(.C) noreturn {
-    // setup the important stuff
     vmm.pagemap.load();
     createCoreInfo(cpu_info);
     gdt.init();
     interrupt.init();
     cpu.init();
-    lapic.enable();
+    apic.lapic.enable();
 
-    // load the TSS
     getCoreInfo().tss.rsp0 = sched.createKernelStack().?;
     getCoreInfo().tss.init();
     getCoreInfo().tss.flush();
 
-    // let BSP know we're done, then off we go!
     _ = booted_cores.fetchAdd(1, .monotonic);
     sched.init() catch unreachable;
 
-    log.debug("CPU {} online!", .{cpu_info.processor_id + 1});
     while (true) {}
 }
 
-pub fn init() void {
+pub fn init() !void {
     if (smp_request.response) |smp| {
         log.debug("Detected {} CPUs.", .{smp.cpu_count});
 
@@ -81,13 +78,13 @@ pub fn init() void {
                 createCoreInfo(cpu_info);
                 getCoreInfo().is_bsp = true;
 
-                // load the TSS
                 getCoreInfo().tss.rsp0 = sched.createKernelStack().?;
                 getCoreInfo().tss.init();
                 getCoreInfo().tss.flush();
 
-                lapic.init();
-                log.debug("CPU {} online!", .{cpu_info.processor_id + 1});
+                cpu.init();
+                apic.lapic.enable();
+
                 continue;
             }
 
@@ -95,5 +92,6 @@ pub fn init() void {
         }
 
         while (booted_cores.load(.monotonic) != smp.cpu_count) {}
+        log.info("All CPUs are online!", .{});
     }
 }

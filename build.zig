@@ -1,7 +1,5 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Arch = std.Target.Cpu.Arch;
-const CrossTarget = std.zig.CrossTarget;
 
 const kora_version = std.SemanticVersion{
     .major = 0,
@@ -10,44 +8,42 @@ const kora_version = std.SemanticVersion{
 };
 
 pub fn build(b: *std.Build) !void {
-    const arch = b.option(Arch, "arch", "The CPU architecture to build for") orelse .x86_64;
-    const target = try genTarget(arch);
-    const limine = b.dependency("limine", .{});
-    const limine_bootloader = b.dependency("limine_bootloader", .{});
-    const uacpi = b.dependency("uacpi", .{});
-
-    const ydin = try buildYdin(b, target, limine, uacpi);
-    const iso = try buildLimineIso(b, ydin, limine_bootloader);
-    const qemu = try runIsoQemu(b, iso, arch);
-    _ = qemu;
-}
-
-fn genTarget(arch: Arch) !CrossTarget {
-    var target = CrossTarget{
-        .cpu_arch = arch,
-        .os_tag = .freestanding,
-        .abi = .none,
-    };
-
-    switch (arch) {
+    var target = b.standardTargetOptions(.{
+        .default_target = .{
+            .cpu_arch = .x86_64,
+            .os_tag = .freestanding,
+            .abi = .none,
+        },
+        .whitelist = &.{
+            .{ .cpu_arch = .x86_64, .os_tag = .freestanding, .abi = .none },
+            .{ .cpu_arch = .aarch64, .os_tag = .freestanding, .abi = .none },
+            .{ .cpu_arch = .riscv64, .os_tag = .freestanding, .abi = .none },
+        },
+    });
+    switch (target.query.cpu_arch.?) {
         .x86_64 => {
             const features = std.Target.x86.Feature;
-            target.cpu_features_sub.addFeature(@intFromEnum(features.mmx));
-            target.cpu_features_sub.addFeature(@intFromEnum(features.sse));
-            target.cpu_features_sub.addFeature(@intFromEnum(features.sse2));
-            target.cpu_features_sub.addFeature(@intFromEnum(features.avx));
-            target.cpu_features_sub.addFeature(@intFromEnum(features.avx2));
-            target.cpu_features_add.addFeature(@intFromEnum(features.soft_float));
+            target.query.cpu_features_sub.addFeature(@intFromEnum(features.mmx));
+            target.query.cpu_features_sub.addFeature(@intFromEnum(features.sse));
+            target.query.cpu_features_sub.addFeature(@intFromEnum(features.sse2));
+            target.query.cpu_features_sub.addFeature(@intFromEnum(features.avx));
+            target.query.cpu_features_sub.addFeature(@intFromEnum(features.avx2));
+            target.query.cpu_features_add.addFeature(@intFromEnum(features.soft_float));
         },
         .aarch64, .riscv64 => {},
         else => return error.UnsupportedArchitecture,
     }
+    const optimize = b.standardOptimizeOption(.{});
+    const limine = b.dependency("limine", .{});
+    const limine_bootloader = b.dependency("limine_bootloader", .{});
+    const uacpi = b.dependency("uacpi", .{});
 
-    return target;
+    _ = try buildYdin(b, target, optimize, limine, uacpi);
+    const iso = try buildLimineIso(b, limine_bootloader);
+    _ = try runIsoQemu(b, iso, target.query.cpu_arch.?);
 }
 
-fn buildYdin(b: *std.Build, target: CrossTarget, limine: *std.Build.Dependency, uacpi: *std.Build.Dependency) !*std.Build.Step.Compile {
-    const optimize = b.standardOptimizeOption(.{});
+fn buildYdin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, limine: *std.Build.Dependency, uacpi: *std.Build.Dependency) !*std.Build.Step.Compile {
     const exe_options = b.addOptions();
 
     // From https://github.com/zigtools/zls
@@ -70,7 +66,7 @@ fn buildYdin(b: *std.Build, target: CrossTarget, limine: *std.Build.Dependency, 
             },
             2 => {
                 // Untagged development build (e.g. 0.10.0-dev.216+34ce200).
-                var it = std.mem.split(u8, git_describe, "-");
+                var it = std.mem.splitSequence(u8, git_describe, "-");
                 const tagged_ancestor = it.first();
                 const commit_height = it.next().?;
                 const commit_id = it.next().?;
@@ -92,10 +88,10 @@ fn buildYdin(b: *std.Build, target: CrossTarget, limine: *std.Build.Dependency, 
 
     const ydin = b.addExecutable(.{
         .name = "vmydin",
-        .root_source_file = .{ .path = "src/main.zig" },
-        .target = b.resolveTargetQuery(target),
+        .root_source_file = b.path("src/main.zig"),
+        .target = target,
         .optimize = optimize,
-        .code_model = switch (target.cpu_arch.?) {
+        .code_model = switch (target.query.cpu_arch.?) {
             .x86_64 => .kernel,
             .aarch64 => .small,
             .riscv64 => .medium,
@@ -103,10 +99,11 @@ fn buildYdin(b: *std.Build, target: CrossTarget, limine: *std.Build.Dependency, 
         },
     });
     ydin.root_module.addOptions("build_options", exe_options);
-    ydin.setLinkerScriptPath(.{ .path = "src/linker.ld" });
+    ydin.setLinkerScriptPath(b.path("src/linker.ld"));
     ydin.root_module.addImport("limine", limine.module("limine"));
-    ydin.addIncludePath(.{ .path = "src/uacpi" });
+    ydin.addIncludePath(b.path("src/uacpi"));
     ydin.addIncludePath(uacpi.path("include"));
+    ydin.root_module.red_zone = false;
     const root_dir = b.pathFromRoot(".");
     ydin.addCSourceFiles(.{
         .files = &[_][]const u8{
@@ -142,18 +139,17 @@ fn buildYdin(b: *std.Build, target: CrossTarget, limine: *std.Build.Dependency, 
     return ydin;
 }
 
-fn buildLimineIso(b: *std.Build, ydin: *std.Build.Step.Compile, limine: *std.Build.Dependency) !*std.Build.Step.Run {
-    _ = ydin;
+fn buildLimineIso(b: *std.Build, limine: *std.Build.Dependency) !*std.Build.Step.Run {
     const limine_path = limine.path(".");
-    const target = b.standardTargetOptions(.{});
-    const limine_exe = b.addExecutable(.{
-        .name = "limine-deploy",
-        .target = target,
-        .optimize = .ReleaseSafe,
-    });
-    limine_exe.addCSourceFile(.{ .file = limine.path("limine.c"), .flags = &[_][]const u8{"-std=c99"} });
-    limine_exe.linkLibC();
-    const limine_exe_run = b.addRunArtifact(limine_exe);
+    //const limine_exe = b.addExecutable(.{
+    //    .name = "limine-deploy",
+    //    .target = b.host,
+    //    .optimize = .ReleaseSafe,
+    //});
+    //limine_exe.addCSourceFile(.{ .file = limine.path("limine.c"), .flags = &[_][]const u8{"-std=c99"} });
+    //limine_exe.linkLibC();
+    //const limine_exe_run = b.addRunArtifact(limine_exe);
+    //limine_exe_run.addArg("bios-install");
 
     const cmd = &[_][]const u8{
         // zig fmt: off
@@ -183,16 +179,16 @@ fn buildLimineIso(b: *std.Build, ydin: *std.Build.Step.Compile, limine: *std.Bui
     const iso_cmd = b.addSystemCommand(cmd);
     iso_cmd.step.dependOn(b.getInstallStep());
 
-    _ = limine_exe_run.addOutputFileArg("kora.iso");
-    limine_exe_run.step.dependOn(&iso_cmd.step);
+    //_ = limine_exe_run.addOutputFileArg("kora.iso");
+    //limine_exe_run.step.dependOn(&iso_cmd.step);
 
     const iso_step = b.step("iso", "Generate a bootable Limine ISO file");
-    iso_step.dependOn(&limine_exe_run.step);
+    iso_step.dependOn(&iso_cmd.step);
 
     return iso_cmd;
 }
 
-fn downloadEdk2(b: *std.Build, arch: Arch) !void {
+fn downloadEdk2(b: *std.Build, arch: std.Target.Cpu.Arch) !void {
     const link = switch (arch) {
         .x86_64 => "https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd",
         .aarch64 => "https://retrage.github.io/edk2-nightly/bin/RELEASEAARCH64_QEMU_EFI.fd",
@@ -201,17 +197,17 @@ fn downloadEdk2(b: *std.Build, arch: Arch) !void {
     };
 
     const cmd = &[_][]const u8{ "curl", link, "-Lo", try edk2FileName(b, arch) };
-    var child_proc = std.ChildProcess.init(cmd, b.allocator);
+    var child_proc = std.process.Child.init(cmd, b.allocator);
     try child_proc.spawn();
     const ret_val = try child_proc.wait();
-    try std.testing.expectEqual(ret_val, std.ChildProcess.Term{ .Exited = 0 });
+    try std.testing.expectEqual(ret_val, std.process.Child.Term{ .Exited = 0 });
 }
 
-fn edk2FileName(b: *std.Build, arch: Arch) ![]const u8 {
-    return std.mem.concat(b.allocator, u8, &[_][]const u8{ "zig-cache/edk2-", @tagName(arch), ".fd" });
+fn edk2FileName(b: *std.Build, arch: std.Target.Cpu.Arch) ![]const u8 {
+    return std.mem.concat(b.allocator, u8, &[_][]const u8{ ".zig-cache/edk2-", @tagName(arch), ".fd" });
 }
 
-fn runIsoQemu(b: *std.Build, iso: *std.Build.Step.Run, arch: Arch) !*std.Build.Step.Run {
+fn runIsoQemu(b: *std.Build, iso: *std.Build.Step.Run, arch: std.Target.Cpu.Arch) !*std.Build.Step.Run {
     _ = std.fs.cwd().statFile(try edk2FileName(b, arch)) catch try downloadEdk2(b, arch);
 
     const qemu_executable = switch (arch) {

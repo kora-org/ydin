@@ -11,27 +11,38 @@ pub export fn handleSyscall(frame: *interrupt.Frame) callconv(.C) void {
 }
 
 pub fn init() void {
+    // Initialize x87 FPU
+    asm volatile ("fninit");
+
+    // Enable SSE
+    var cr0 = arch.cr.read(0);
+    cr0 &= ~(@as(u64, 1) << 2);
+    cr0 |= @as(u64, 1) << 1;
+    arch.cr.write(0, cr0);
+
+    var cr4 = arch.cr.read(4);
+    cr4 |= @as(u64, 3) << 9;
+    arch.cr.write(4, cr4);
+
     fpu.init();
 
-    // set the CPU to a acceptable state
+    // Set the CPU to a acceptable state
     cr.write(0, (cr.read(0) & ~@as(u64, 1 << 2)) | 0b10);
     cr.write(4, cr.read(4) | (1 << 7));
 
-    // enable pkeys (if supported)
-    if (arch.cpuid(7, 0).ecx & (1 << 3) != 0) {
+    // Enable pkeys (if supported)
+    if (arch.cpuid(7, 0).ecx & (1 << 3) != 0)
         cr.write(4, cr.read(4) | (1 << 22));
-    }
 
-    // enable umip (if supported)
-    if (arch.cpuid(7, 0).ecx & (1 << 2) != 0) {
+    // Enable umip (if supported)
+    if (arch.cpuid(7, 0).ecx & (1 << 2) != 0)
         cr.write(4, cr.read(4) | (1 << 11));
-    }
 
-    // enable syscall
-    arch.wrmsr(0xC0000081, (@as(u64, 0x30 | 0b11) << 48) | ((@as(u64, 0x28) << 32)));
-    arch.wrmsr(0xC0000082, @intFromPtr(&syscallEntry));
-    arch.wrmsr(0xC0000080, arch.rdmsr(0xc0000080) | 1);
-    arch.wrmsr(0xC0000084, ~@as(u32, 2));
+    // Enable syscall
+    arch.wrmsr(0xc0000081, (@as(u64, 0x30 | 0b11) << 48) | ((@as(u64, 0x28) << 32)));
+    arch.wrmsr(0xc0000082, @intFromPtr(&syscallEntry));
+    arch.wrmsr(0xc0000080, arch.rdmsr(0xc0000080) | 1);
+    arch.wrmsr(0xc0000084, ~@as(u32, 2));
 }
 
 fn syscallEntry() callconv(.Naked) void {

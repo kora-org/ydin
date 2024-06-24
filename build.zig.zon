@@ -3,8 +3,8 @@
     .version = "0.1.0",
     .dependencies = .{
         .limine = .{
-            .url = "git+https://github.com/kora-org/limine#230d75b592d58f015ae321f7a2c4280d660984dd",
-            .hash = "12205f5363fa339b40409504ded9173347390cb0bb2f6e7c259e7fbcd0584ef724df",
+            .url = "git+https://codeberg.org/kora/limine#5883690b9553d4f23e1bb1ab9ee11d7fccac92af",
+            .hash = "1220694dd409ebd652d1dc9913ad4e4855239850b07f1c3c4d33f505ab1117b3fae1",
         },
         .limine_bootloader = .{
             .url = "git+https://github.com/limine-bootloader/limine#v7.0.2-binary",

@@ -9,7 +9,11 @@ const writer = @import("writer.zig");
 const uacpi = @import("acpi.zig");
 pub const panic = @import("panic.zig").panic;
 
+var log_lock = arch.Spinlock{};
 fn logFn(comptime level: std.log.Level, comptime scope: @Type(.EnumLiteral), comptime format: []const u8, args: anytype) void {
+    log_lock.lock();
+    defer log_lock.unlock();
+
     const scope_prefix = if (scope == .default) "main" else @tagName(scope);
     const prefix = "\x1b[32m[ydin:" ++ scope_prefix ++ "] " ++ switch (level) {
         .err => "\x1b[31merror",
@@ -30,11 +34,10 @@ pub fn main() !void {
     std.log.info("\x1b[94mKora\x1b[0m version {s}", .{build_options.version});
     std.log.info("Compiled with Zig v{}", .{builtin.zig_version});
     std.log.info("All your {s} are belong to us.", .{"codebase"});
-    arch.cpu.init();
     pmm.init();
     arch.vmm.init();
     arch.acpi.init();
-    arch.smp.init();
+    try arch.smp.init();
     //if (arch.acpi.rsdp_request.response) |rsdp|
     //    arch.acpi.rsdp_response = rsdp.*;
     //
